@@ -1497,6 +1497,137 @@
   line-height: 1.7;
 }
 
+.online-case-comments-list .online-case-comment-thread {
+  display: block;
+}
+
+.online-case-comment-main {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+}
+
+.online-case-comment-reply-trigger {
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 0 8px;
+  color: #d4bb6b;
+  background: transparent;
+  border: 1px solid #5b5135;
+  cursor: pointer;
+  font-size: 8px;
+}
+
+.online-case-comment-reply-trigger:hover {
+  color: #fff1c8;
+  background: #5d1d1f;
+  border-color: #a83436;
+}
+
+.online-case-comment-replies {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0 39px;
+  padding-left: 9px;
+  border-left: 2px solid #8b292b;
+}
+
+.online-case-comment-reply {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px;
+  background: #201d19;
+  border: 1px solid #3e372b;
+}
+
+.online-case-comments-list .online-case-comment-reply strong {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  justify-content: stretch;
+  gap: 5px;
+}
+
+.online-case-comment-reply strong b {
+  padding: 2px 4px;
+  color: #fff1c8;
+  background: #762325;
+  border: 1px solid #9f3436;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.online-case-comment-reply p {
+  margin-top: 5px;
+}
+
+.online-case-comment-reply-form {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0 39px;
+  padding: 9px;
+  background: #211f1c;
+  border: 1px solid #8e793f;
+}
+
+.online-case-comment-reply-form header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #d4bb6b;
+  font-size: 8px;
+}
+
+.online-case-comment-reply-form header button {
+  padding: 0;
+  color: #8f887c;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 7px;
+}
+
+.online-case-comment-reply-form textarea {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px;
+  resize: vertical;
+  color: #d9cfbc;
+  background: #181715;
+  border: 1px solid #403c34;
+  outline: 0;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+.online-case-comment-reply-form textarea:focus {
+  border-color: #a88e48;
+}
+
+.online-case-comment-reply-form > button {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #fff1c8;
+  background: #7c2022;
+  border: 1px solid #a83436;
+  cursor: pointer;
+  font-size: 8px;
+}
+
+.online-case-comment-reply-form > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .online-case-comments-error {
   margin: 0;
   padding: 8px 15px;

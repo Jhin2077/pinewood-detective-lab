@@ -397,7 +397,11 @@ function CommentsDialog({
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<BoardComment | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
   const [error, setError] = useState("");
+  const canReplyAsOwner = Boolean(session?.user.id && session.user.id === board.ownerId);
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -433,6 +437,30 @@ function CommentsDialog({
     }
   };
 
+  const submitReply = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canReplyAsOwner || !session?.user.id || !replyingTo || !replyBody.trim()) return;
+    setReplySubmitting(true);
+    setError("");
+    try {
+      await addBoardComment(board.id, session.user.id, replyBody, replyingTo.id);
+      setReplyBody("");
+      setReplyingTo(null);
+      await loadComments();
+      onCommentAdded();
+    } catch {
+      setError("回复没有发送成功，请稍后再试。");
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
+  const startReply = (comment: BoardComment) => {
+    setReplyingTo(comment);
+    setReplyBody("");
+    setError("");
+  };
+
   return (
     <div className="community-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
@@ -450,13 +478,67 @@ function CommentsDialog({
             <span>正在读取讨论…</span>
           ) : comments.length === 0 ? (
             <span>还没有评论，留下第一条调查意见。</span>
-          ) : comments.map((comment) => (
-            <article key={comment.id}>
-              <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={32} />
-              <div>
-                <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
-                <p>{comment.body}</p>
+          ) : comments.filter((comment) => !comment.parentId).map((comment) => (
+            <article className="community-comment-thread" key={comment.id}>
+              <div className="community-comment-main">
+                <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={32} />
+                <div>
+                  <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
+                  <p>{comment.body}</p>
+                  {canReplyAsOwner && (
+                    <button
+                      type="button"
+                      className="community-comment-reply-trigger"
+                      onClick={() => startReply(comment)}
+                    >
+                      <ChatCircleIcon size={13} />回复这条留言
+                    </button>
+                  )}
+                </div>
               </div>
+              {comments.some((reply) => reply.parentId === comment.id) && (
+                <div className="community-comment-replies">
+                  {comments.filter((reply) => reply.parentId === comment.id).map((reply) => (
+                    <div className="community-comment-reply" key={reply.id}>
+                      <ProfileAvatar url={reply.avatarUrl} name={reply.author} size={26} />
+                      <div>
+                        <header>
+                          <strong>{reply.author}<b>案件发布者</b></strong>
+                          <i>{reply.time}</i>
+                        </header>
+                        <p>{reply.body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {canReplyAsOwner && replyingTo?.id === comment.id && (
+                <form className="community-comment-reply-form" onSubmit={submitReply}>
+                  <header>
+                    <span>回复 {comment.author}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyingTo(null);
+                        setReplyBody("");
+                      }}
+                    >
+                      取消
+                    </button>
+                  </header>
+                  <textarea
+                    required
+                    autoFocus
+                    maxLength={1000}
+                    value={replyBody}
+                    onChange={(event) => setReplyBody(event.target.value)}
+                    placeholder={`作为案件发布者回复 ${comment.author}…`}
+                  />
+                  <button type="submit" disabled={replySubmitting || !replyBody.trim()}>
+                    {replySubmitting ? "回复中…" : "发布回复"}
+                  </button>
+                </form>
+              )}
             </article>
           ))}
         </div>
@@ -493,6 +575,7 @@ function CommentsDialog({
 function BoardCommentsPanel({
   boardId,
   boardTitle,
+  boardOwnerId,
   session,
   onClose,
   onOpenAuth,
@@ -500,6 +583,7 @@ function BoardCommentsPanel({
 }: {
   boardId: string;
   boardTitle: string;
+  boardOwnerId: string;
   session: Session | null;
   onClose: () => void;
   onOpenAuth: (mode: AuthMode) => void;
@@ -509,7 +593,11 @@ function BoardCommentsPanel({
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<BoardComment | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
   const [error, setError] = useState("");
+  const canReplyAsOwner = Boolean(session?.user.id && session.user.id === boardOwnerId);
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -546,6 +634,29 @@ function BoardCommentsPanel({
     }
   };
 
+  const submitReply = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canReplyAsOwner || !session?.user.id || !replyingTo || !replyBody.trim()) return;
+    setReplySubmitting(true);
+    setError("");
+    try {
+      await addBoardComment(boardId, session.user.id, replyBody, replyingTo.id);
+      setReplyBody("");
+      setReplyingTo(null);
+      await loadComments();
+    } catch {
+      setError("回复没有发送成功，请稍后再试。");
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
+  const startReply = (comment: BoardComment) => {
+    setReplyingTo(comment);
+    setReplyBody("");
+    setError("");
+  };
+
   return (
     <aside className="online-case-comments-panel" aria-label="协助探案的留言">
       <header>
@@ -565,14 +676,70 @@ function BoardCommentsPanel({
           <span>正在读取协助留言…</span>
         ) : comments.length === 0 ? (
           <span>还没有留言。你可以留下第一条调查意见。</span>
-        ) : comments.map((comment) => (
-          <article key={comment.id}>
-            <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={30} />
-            <div>
-              <strong>{comment.author}<small>{comment.time}</small></strong>
-              <span>{comment.handle}</span>
-              <p>{comment.body}</p>
+        ) : comments.filter((comment) => !comment.parentId).map((comment) => (
+          <article className="online-case-comment-thread" key={comment.id}>
+            <div className="online-case-comment-main">
+              <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={30} />
+              <div>
+                <strong>{comment.author}<small>{comment.time}</small></strong>
+                <span>{comment.handle}</span>
+                <p>{comment.body}</p>
+                {canReplyAsOwner && (
+                  <button
+                    type="button"
+                    className="online-case-comment-reply-trigger"
+                    onClick={() => startReply(comment)}
+                  >
+                    <ChatCircleIcon size={12} />回复
+                  </button>
+                )}
+              </div>
             </div>
+            {comments.some((reply) => reply.parentId === comment.id) && (
+              <div className="online-case-comment-replies">
+                {comments.filter((reply) => reply.parentId === comment.id).map((reply) => (
+                  <div className="online-case-comment-reply" key={reply.id}>
+                    <ProfileAvatar url={reply.avatarUrl} name={reply.author} size={25} />
+                    <div>
+                      <strong>
+                        {reply.author}
+                        <b>案件发布者</b>
+                        <small>{reply.time}</small>
+                      </strong>
+                      <p>{reply.body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {canReplyAsOwner && replyingTo?.id === comment.id && (
+              <form className="online-case-comment-reply-form" onSubmit={submitReply}>
+                <header>
+                  <span>回复 {comment.author}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setReplyBody("");
+                    }}
+                  >
+                    取消
+                  </button>
+                </header>
+                <textarea
+                  required
+                  autoFocus
+                  maxLength={1000}
+                  value={replyBody}
+                  onChange={(event) => setReplyBody(event.target.value)}
+                  placeholder={`作为案件发布者回复 ${comment.author}…`}
+                />
+                <button type="submit" disabled={replySubmitting || !replyBody.trim()}>
+                  <ChatCircleIcon size={13} />
+                  {replySubmitting ? "回复中…" : "发布回复"}
+                </button>
+              </form>
+            )}
           </article>
         ))}
       </div>
@@ -1304,6 +1471,7 @@ export function OnlineWorkshopApp() {
             <BoardCommentsPanel
               boardId={activeBoardId}
               boardTitle={publicBoardTitle || publicPreview?.meta.caseTitle || "公开案件板"}
+              boardOwnerId={publicBoardOwnerId}
               session={session}
               onClose={() => setCommentsPanelOpen(false)}
               onOpenAuth={setAuthMode}

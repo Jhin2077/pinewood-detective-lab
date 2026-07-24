@@ -61,6 +61,8 @@ export type CommunityProfile = {
 
 export type BoardComment = {
   id: string;
+  authorId: string;
+  parentId: string | null;
   body: string;
   author: string;
   handle: string;
@@ -439,6 +441,8 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
     .from("comments")
     .select(`
       id,
+      author_id,
+      parent_id,
       body,
       created_at,
       profiles!comments_author_id_fkey(display_name, handle, avatar_url)
@@ -449,6 +453,8 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
 
   return ((data ?? []) as unknown as Array<{
     id: string;
+    author_id: string;
+    parent_id: string | null;
     body: string;
     created_at: string;
     profiles: ProfileJoin | ProfileJoin[] | null;
@@ -456,6 +462,8 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
     const profile = joinOne(row.profiles);
     return {
       id: row.id,
+      authorId: row.author_id,
+      parentId: row.parent_id,
       body: row.body,
       author: profile.display_name || "匿名侦探",
       handle: profile.handle ? `@${profile.handle}` : "",
@@ -470,12 +478,14 @@ export async function addBoardComment(
   boardId: string,
   userId: string,
   body: string,
+  parentCommentId: string | null = null,
 ): Promise<void> {
   const { error } = await supabase
     .from("comments")
     .insert({
       board_id: boardId,
       author_id: userId,
+      parent_id: parentCommentId,
       body: body.trim(),
     });
   if (error) throw error;
