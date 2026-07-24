@@ -1,0 +1,11 @@
+node_modules/
+dist/
+output/
+.playwright-cli/
+.vite-online-preview.*.log
+.env
+.env.*
+!.env.example
+*.local
+public/community/
+.github/workflows/deploy-pages.yml

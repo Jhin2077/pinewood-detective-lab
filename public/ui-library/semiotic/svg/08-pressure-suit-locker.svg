@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">压力服存放柜 / PRESSURE SUIT LOCKER</title>
+  <desc id="desc">Pinewood Semiotic Signs vector asset. Number 08.</desc>
+  <g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="suit-mark" fill="#FFFDF2"><circle cx="128" cy="73" r="23"/><path d="M105 99h46l10 25h25v34h-33v58h-50v-58H70v-34h25z"/></g><circle id="helmet-signal" cx="128" cy="72" r="17" fill="#B70D14"/>
+  </g>
+</svg>

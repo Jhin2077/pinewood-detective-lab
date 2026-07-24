@@ -1,0 +1,268 @@
+[
+  {
+    "id": "arrows-clockwise",
+    "file": "svg/arrows-clockwise.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "arrows-out",
+    "file": "svg/arrows-out.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "broadcast",
+    "file": "svg/broadcast.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "chat",
+    "file": "svg/chat.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "check",
+    "file": "svg/check.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "clock",
+    "file": "svg/clock.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "cursor",
+    "file": "svg/cursor.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "download",
+    "file": "svg/download.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "eye",
+    "file": "svg/eye.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "document",
+    "file": "svg/document.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "fire",
+    "file": "svg/fire.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "save",
+    "file": "svg/save.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "folder",
+    "file": "svg/folder.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "graph",
+    "file": "svg/graph.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "hand",
+    "file": "svg/hand.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "heart",
+    "file": "svg/heart.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "image",
+    "file": "svg/image.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "link-break",
+    "file": "svg/link-break.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "link",
+    "file": "svg/link.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "search",
+    "file": "svg/search.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "minus",
+    "file": "svg/minus.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "moon",
+    "file": "svg/moon.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "note",
+    "file": "svg/note.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "plus",
+    "file": "svg/plus.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "presentation",
+    "file": "svg/presentation.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "pin",
+    "file": "svg/pin.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "share",
+    "file": "svg/share.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "sign-in",
+    "file": "svg/sign-in.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "stack",
+    "file": "svg/stack.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "sun",
+    "file": "svg/sun.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "tag",
+    "file": "svg/tag.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "trash",
+    "file": "svg/trash.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "trend",
+    "file": "svg/trend.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "trophy",
+    "file": "svg/trophy.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "upload",
+    "file": "svg/upload.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "user",
+    "file": "svg/user.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "user-plus",
+    "file": "svg/user-plus.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  },
+  {
+    "id": "x",
+    "file": "svg/x.svg",
+    "format": "SVG",
+    "source": "Phosphor Icons",
+    "license": "MIT"
+  }
+]

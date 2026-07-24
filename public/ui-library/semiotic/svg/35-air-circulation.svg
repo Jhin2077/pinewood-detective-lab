@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">空气循环 / AIR CIRCULATION</title>
+  <desc id="desc">Pinewood Semiotic Signs vector asset. Number 35.</desc>
+  <g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="air-circulation-mark" fill="none" stroke="#FFFDF2" stroke-width="16" stroke-linecap="round"><path d="M128 118V63c0-26 41-26 41 0v17"/><path d="M138 128h55c26 0 26 41 0 41h-17"/><path d="M128 138v55c0 26-41 26-41 0v-17"/><path d="M118 128H63c-26 0-26-41 0-41h17"/></g><circle cx="128" cy="128" r="15" fill="#FFFDF2"/>
+  </g>
+</svg>
