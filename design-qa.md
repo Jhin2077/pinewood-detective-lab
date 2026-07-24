@@ -10,17 +10,22 @@
   - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-b830f6b4-ec83-4275-b673-34478f3dc5e7.png`
   - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-a02a4fe6-9b8a-4a87-9ecf-9d69b4ff9796.png`
   - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-b0f144ce-71fd-4533-8039-3a57c18ff6a2.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-d1bc3f23-2c6d-4987-b90b-b59c1d7ae9d5.png`
 - Browser-rendered implementation:
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-implementation.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-context-menu.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-merged-case-editor-1280.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-full-board-thumbnails-1280.png`
+  - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-header-responsive-1249.png`
+  - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-header-responsive-1440.png`
+  - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-header-responsive-1920.png`
 - Combined comparisons:
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-layout-comparison.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-context-comparison.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-case-editor-comparison.png`
   - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-community-thumbnail-comparison.png`
-- Viewports: 1920 × 905 CSS px for source-sized layout measurement and 1280 × 720 CSS px for the normal browser-window regression pass.
+  - `C:\Users\ALIENWARE\.codex\visualizations\2026\07\24\019f9224-fb58-7353-8887-7e05c7f68da5\qa-header-responsive-comparison.png`
+- Viewports: 1920 × 905 CSS px for the wide desktop state, 1440 × 810 CSS px for the medium desktop state, and 1249 × 720 CSS px matching the reported Chrome crop.
 - Density: device scale factor 1. Focused comparison crops were normalized to a shared width before inspection.
 - State: desktop editable case board. The public-owner delete button remains conditional on the authenticated owner; its header slot and compact owner-state width were checked against the available 286 px region.
 
@@ -32,9 +37,13 @@ The focused case-editor comparison confirms that the current-board control now e
 
 The community comparison confirms that each feed card now renders the case's corkboard snapshot rather than its first uploaded image. Existing clue coordinates are normalized into the thumbnail, evidence links are drawn beneath the clue cards, and a clue/link count communicates complexity.
 
+The responsive-header comparison uses the user's 1249 × 101 px failure crop above a same-width implementation crop. The old one-row layout truncates the case title and crowds the return, type, and add controls into the same horizontal track. The revised state gives persistent actions and the case editor separate rows, preserves the same hierarchy and tokens, and keeps the board content aligned below the 108 px header.
+
 ## Focused region comparison evidence
 
 The context-menu comparison shows the requested destructive action as the final, red-accented menu item. It preserves the existing layer and connection actions and does not appear in shared read-only mode.
+
+The responsive-header crop is the required focused comparison for this iteration. At the exact 1249 px source width, the case-title input measures 639 CSS px, the complete 21-character test title has `scrollWidth === clientWidth`, and the editor retains visible board index, genre, and add controls. “返回社区” ends at x=93 while the editor begins at x=164.5, leaving a 71.5 px gap.
 
 ## Findings and comparison history
 
@@ -68,6 +77,11 @@ The context-menu comparison shows the requested destructive action as the final,
   - Fix: moved title and type into the centered “当前案件板” editor, strengthened title weight, kept the two-digit board index visible, and reduced the left brand metadata to CASE ID.
   - Post-fix evidence: direct edits to “南京的鸭子都去哪了？” and “模拟恐怖” persisted and immediately appeared in the inspector summary. The 1280 px pass shows all three fields without horizontal overflow.
 
+- [P1] The single-row header clipped the case editor and hid persistent actions in the reported Chrome window.
+  - Earlier evidence: the 1249 px source crop shows “南京的鸭子都去哪” cut short while the return control and board editor compete for the same row.
+  - Fix: below 1680 px, the header becomes two rows. Brand and save/display/publish controls occupy row one; return-community and the 920 px case editor occupy row two. Board, tool rail, and inspector top insets move to 108 px so the new header never overlays the workspace.
+  - Post-fix evidence: at 1249 px, all persistent actions, “返回社区”, board number, the complete title “南京的鸭子都去哪了？”, genre, and add button are visible with no document overflow. The same structure also passed at 1440 × 810; 1920 × 905 correctly returns to the compact one-row desktop header.
+
 ## Required fidelity surfaces
 
 - Fonts and typography: existing project type families, weights, sizes, and letter spacing are preserved. New labels use the established compact monospace/header styles.
@@ -84,10 +98,12 @@ The context-menu comparison shows the requested destructive action as the final,
 - Verified a confirmation dialog opens before deletion.
 - Verified public shared boards remain read-only through the existing `sharedView` guard.
 - Edited the case title and genre directly inside the current-board control and verified the resulting values.
+- Verified a longer test title, “南京的鸭子都去哪了？——第七码头目击档案”, fits the 1249 px editor without horizontal clipping (`clientWidth` and `scrollWidth` both 638 px).
+- Verified the return-community icon remains visible when its text collapses at 1120 px and below; at the reported 1249 px width both icon and text remain visible.
 - Loaded two live community records and verified two snapshot-backed corkboard thumbnails.
 - Verified the public-list thumbnail background retains the real cork texture in light mode.
 - Browser console warnings/errors: none.
-- Document overflow at 1920 × 905 and 1280 × 720: none.
+- Document overflow at 1920 × 905, 1440 × 810, and 1249 × 720: none.
 
 ## Follow-up polish
 

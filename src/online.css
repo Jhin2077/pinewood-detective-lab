@@ -1272,17 +1272,29 @@
 }
 
 @media (max-width: 1680px) {
+  .board-header-addon {
+    position: absolute;
+    left: 14px;
+    right: auto;
+    top: auto;
+    bottom: 8px;
+    transform: none;
+  }
+
   .online-preview-ribbon > span {
     display: none;
   }
 }
 
-@media (max-width: 1500px) {
+@media (max-width: 1120px) {
   .board-header-addon {
     position: absolute;
-    right: 270px;
-    top: 50%;
-    transform: translateY(-50%);
+    z-index: 80;
+    left: 14px;
+    right: auto;
+    top: auto;
+    bottom: 8px;
+    transform: none;
   }
 
   .online-preview-ribbon button {
@@ -1291,18 +1303,15 @@
     padding: 0;
   }
 
-  .online-preview-ribbon button > span {
+  .online-preview-ribbon button > span:not(.pinewood-ui-icon) {
     display: none;
   }
 }
 
-@media (max-width: 880px) {
+@media (max-width: 640px) {
   .board-header-addon {
-    position: fixed;
-    z-index: 80;
-    top: 68px;
-    right: 8px;
-    transform: none;
+    left: 8px;
+    bottom: 6px;
   }
 }
 
