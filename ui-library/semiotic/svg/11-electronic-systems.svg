@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">电子系统 / ASTRONIC SYSTEMS / ELECTRONICS</title>
+  <desc id="desc">Pinewood Semiotic Signs vector asset. Number 11.</desc>
+  <g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="electronics-mark"><path d="M32 126h192" stroke="#FFFDF2" stroke-width="6"/><path d="M102 55h52v36h36v52h-36v35h-52v-35H66V91h36z" fill="#696A67"/><path d="M94 73h68M128 40v66" stroke="#FFFDF2" stroke-width="7"/><rect x="92" y="167" width="72" height="25" rx="5" fill="#FFFDF2"/></g>
+  </g>
+</svg>

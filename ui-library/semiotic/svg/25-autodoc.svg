@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">自动医疗舱 / AUTODOC</title>
+  <desc id="desc">Pinewood Semiotic Signs vector asset. Number 25.</desc>
+  <g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#0F5B38" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="autodoc-corners" fill="#FFFDF2"><rect x="41" y="41" width="62" height="62" rx="8"/><rect x="153" y="41" width="62" height="62" rx="8"/><rect x="41" y="153" width="62" height="62" rx="8"/><rect x="153" y="153" width="62" height="62" rx="8"/></g>
+  </g>
+</svg>

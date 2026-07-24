@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1420" height="1360" viewBox="0 0 1420 1360">
+  <rect width="100%" height="100%" fill="#F4F3E7"/>
+  <rect x="18" y="18" width="1384" height="1324" rx="26" fill="none" stroke="#070707" stroke-width="16"/>
+  <text x="52" y="84" font-family="Arial Narrow, sans-serif" font-size="44" letter-spacing="1" fill="#070707">PINEWOOD SEMIOTIC SIGNS</text>
+  <text x="1368" y="66" text-anchor="end" font-family="Arial, sans-serif" font-size="12" letter-spacing="2" fill="#555650">35 EDITABLE VECTOR ASSETS</text>
+  <text x="1368" y="86" text-anchor="end" font-family="Arial, sans-serif" font-size="10" letter-spacing="1.4" fill="#B70D14">ONLINE WORKSHOP UI STANDARD / 2026</text>
+  <g id="cell-01-pressurized-area" transform="translate(52 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="zone-field"><rect x="48" y="48" width="160" height="160" rx="6" fill="#F4F3E7"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">01 · 增压区域</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">PRESSURIZED AREA</text>
+    </g>
+<g id="cell-02-artificial-gravity" transform="translate(240 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="information-mark" fill="#B70D14"><circle cx="128" cy="80" r="22"/><path d="M109 109h38v83h-38z"/><circle cx="128" cy="190" r="19"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">02 · 人工重力增压区</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">PRESSURIZED / ARTIFICIAL GRAVITY</text>
+    </g>
+<g id="cell-03-gravity-absent" transform="translate(428 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="gravity-symbol" fill="#B70D14"><path d="M111 199v-47H83v-25h28v-23L73 65l20-20 35 36 35-36 20 20-40 40v94z"/><circle cx="128" cy="198" r="20"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">03 · 无人工重力</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">ARTIFICIAL GRAVITY ABSENT</text>
+    </g>
+<g id="cell-04-cryogenic-vault" transform="translate(616 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="cryogenic-mark"><path d="M75 54h106l-53 94z" fill="#173A76"/><path d="M71 172h100v23H71z" fill="#B70D14"/><circle cx="184" cy="184" r="13" fill="#B70D14"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">04 · 低温储藏舱</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">CRYOGENIC VAULT</text>
+    </g>
+<g id="cell-05-airlock" transform="translate(804 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="airlock-mark"><path d="M33 34h190v190z" fill="#070707"/><path d="M34 37h188M34 219h188" stroke="#B70D14" stroke-width="12"/><path d="M41 45l174 174" stroke="#FFFDF2" stroke-width="6"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">05 · 气闸</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">AIRLOCK</text>
+    </g>
+<g id="cell-06-bulkhead-door" transform="translate(992 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="bulkhead-mark"><path d="M129 31h96v194h-96z" fill="#070707"/><path d="M126 30v196M72 31h108M72 225h108" stroke="#B70D14" stroke-width="12"/><path d="M129 112h76" stroke="#FFFDF2" stroke-width="6"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">06 · 舱壁门</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">BULKHEAD DOOR</text>
+    </g>
+<g id="cell-07-non-pressurized-zone" transform="translate(1180 178)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#070707" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="vacuum-field"><path d="M37 39h182v151H37z" fill="#070707"/><path d="M40 207h176" stroke="#B70D14" stroke-width="14"/><path d="M43 194h170" stroke="#FFFDF2" stroke-width="5"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">07 · 非增压区域</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">NON-PRESSURIZED AREA</text>
+    </g>
+<g id="cell-08-pressure-suit-locker" transform="translate(52 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="suit-mark" fill="#FFFDF2"><circle cx="128" cy="73" r="23"/><path d="M105 99h46l10 25h25v34h-33v58h-50v-58H70v-34h25z"/></g><circle id="helmet-signal" cx="128" cy="72" r="17" fill="#B70D14"/>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">08 · 压力服存放柜</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">PRESSURE SUIT LOCKER</text>
+    </g>
+<g id="cell-09-photonic-systems" transform="translate(240 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="photon-route" fill="none" stroke="#FFFDF2" stroke-width="7"><path d="M38 74h178v38H82v26h100v39H38"/><path d="M59 39v177M198 39v177"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">09 · 光子系统</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">PHOTONIC SYSTEMS</text>
+    </g>
+<g id="cell-10-laser" transform="translate(428 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="laser-grid"><path d="M31 31h97v97H31zM128 128h97v97h-97z" fill="#696A67"/><path d="M128 31h97v97h-97zM31 128h97v97H31z" fill="#898A87"/><path d="M128 70l18 40 40 18-40 18-18 40-18-40-40-18 40-18z" fill="#FFFDF2"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">10 · 激光系统</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">LASER</text>
+    </g>
+<g id="cell-11-electronic-systems" transform="translate(616 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="electronics-mark"><path d="M32 126h192" stroke="#FFFDF2" stroke-width="6"/><path d="M102 55h52v36h36v52h-36v35h-52v-35H66V91h36z" fill="#696A67"/><path d="M94 73h68M128 40v66" stroke="#FFFDF2" stroke-width="7"/><rect x="92" y="167" width="72" height="25" rx="5" fill="#FFFDF2"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">11 · 电子系统</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">ASTRONIC SYSTEMS / ELECTRONICS</text>
+    </g>
+<g id="cell-12-hazard-warning" transform="translate(804 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#B70D14" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="hazard-mark" fill="#FFFDF2"><path d="M31 91h56V31h39v60h43V31h56v194h-56v-72h-43v72H87v-72H31z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">12 · 危险警告</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">HAZARD / WARNING</text>
+    </g>
+<g id="cell-13-gravity-suit-required" transform="translate(992 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#070707" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="suited-person" fill="#FFFDF2"><circle cx="128" cy="73" r="21"/><path d="M105 99h46l9 26h24v34h-32v58h-48v-58H72v-34h24z"/></g><circle cx="128" cy="72" r="15" fill="#B70D14"/><path id="floor-signal" d="M32 207h46v18H32zm146 0h46v18h-46z" fill="#B70D14"/>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">13 · 人工重力失效需穿压力服</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">ARTIFICIAL GRAVITY / SUIT REQUIRED</text>
+    </g>
+<g id="cell-14-vacuum-no-gravity" transform="translate(1180 404)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#070707" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="vacuum-gravity-mark" fill="#FFFDF2"><path d="M113 198v-48H88v-27h25v-20L76 67l22-22 30 30 30-30 22 22-37 36v20h25v27h-25v48z"/></g><circle cx="128" cy="199" r="17" fill="#B70D14"/>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">14 · 真空无重力需穿压力服</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">NON-PRESSURIZED / NO GRAVITY</text>
+    </g>
+<g id="cell-15-exhaust" transform="translate(52 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F2AA18" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="exhaust-flow" fill="#FFFDF2"><path d="M54 38h29v91l-25 82H31l23-90zM97 38h28v104l-12 69H85l12-73zM139 38h28v100l12 73h-28l-12-69zM181 38h27l17 83 0 90h-27l-17-82z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">15 · 排气口</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">EXHAUST</text>
+    </g>
+<g id="cell-16-radiation-shield" transform="translate(240 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#B70D14" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="shield-information"><rect x="70" y="72" width="116" height="114" rx="12" fill="#FFFDF2"/><circle cx="128" cy="98" r="18" fill="#B70D14"/><path d="M113 121h30v48h-30z" fill="#B70D14"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">16 · 辐射屏蔽区</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">AREA SHIELDED FROM RADIATION</text>
+    </g>
+<g id="cell-17-radiation-hazard" transform="translate(428 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F2AA18" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="radiation-indicator"><rect x="69" y="69" width="118" height="118" rx="10" fill="#FFFDF2"/><path d="M70 163h83v24H70z" fill="#070707"/><circle cx="170" cy="175" r="17" fill="#070707"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">17 · 辐射危险</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">RADIATION HAZARD</text>
+    </g>
+<g id="cell-18-high-radioactivity" transform="translate(616 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F2AA18" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="radioactivity-cross"><path d="M32 32l192 192M224 32L32 224" stroke="#FFFDF2" stroke-width="8"/><path d="M32 32h70l122 122v70h-70L32 102zm192 0v70L102 224H32v-70L154 32z" fill="#070707"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">18 · 高放射性</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">HIGH RADIOACTIVITY</text>
+    </g>
+<g id="cell-19-refrigeration" transform="translate(804 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="cold-storage"><rect x="57" y="57" width="142" height="142" rx="9" fill="#173A76"/><rect x="79" y="79" width="98" height="98" rx="5" fill="#F4F3E7"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">19 · 冷藏区域</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">REFRIGERATION</text>
+    </g>
+<g id="cell-20-directions" transform="translate(992 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="direction-chevron" fill="#B70D14"><path d="M48 159l80-80 80 80-25 25-55-55-55 55z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">20 · 方向指引</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">DIRECTIONS</text>
+    </g>
+<g id="cell-21-life-support" transform="translate(1180 630)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="life-support-route" fill="#FFFDF2"><path d="M93 31h70v37h31v43h31v34h-63v45h31v35H63v-35h31v-45H31v-34h31V68h31z"/><rect x="111" y="80" width="34" height="96" rx="5" fill="#7D7E7B"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">21 · 生命维持系统</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">LIFE SUPPORT SYSTEM</text>
+    </g>
+<g id="cell-22-galley" transform="translate(52 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#0F5B38" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="galley-mark"><circle cx="128" cy="128" r="77" fill="#FFFDF2"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">22 · 餐饮区</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">GALLEY</text>
+    </g>
+<g id="cell-23-coffee" transform="translate(240 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#0F5B38" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="coffee-mark" fill="#FFFDF2"><path d="M55 92h116v83H55z"/><path d="M165 107h27c25 0 25 54 0 54h-27v-18h23c7 0 7-18 0-18h-23z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">23 · 咖啡供应</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">COFFEE</text>
+    </g>
+<g id="cell-24-bridge" transform="translate(428 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="bridge-mark"><path d="M128 63l62 119H66z" fill="#FFFDF2"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">24 · 控制桥</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">BRIDGE</text>
+    </g>
+<g id="cell-25-autodoc" transform="translate(616 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#0F5B38" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="autodoc-corners" fill="#FFFDF2"><rect x="41" y="41" width="62" height="62" rx="8"/><rect x="153" y="41" width="62" height="62" rx="8"/><rect x="41" y="153" width="62" height="62" rx="8"/><rect x="153" y="153" width="62" height="62" rx="8"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">25 · 自动医疗舱</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">AUTODOC</text>
+    </g>
+<g id="cell-26-computer-terminal" transform="translate(804 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="terminal-mark" fill="#FFFDF2"><rect x="44" y="48" width="168" height="91" rx="5"/><rect x="44" y="151" width="35" height="27" rx="3"/><rect x="88" y="151" width="35" height="27" rx="3"/><rect x="132" y="151" width="35" height="27" rx="3"/><rect x="176" y="151" width="36" height="27" rx="3"/><rect x="44" y="186" width="35" height="27" rx="3"/><rect x="88" y="186" width="35" height="27" rx="3"/><rect x="132" y="186" width="80" height="27" rx="3"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">26 · 计算终端</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">COMPUTER TERMINAL</text>
+    </g>
+<g id="cell-27-medical" transform="translate(992 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#F4F3E7" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="medical-cross"><path d="M101 45h54v56h56v54h-56v56h-54v-56H45v-54h56z" fill="#B70D14"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">27 · 医疗站</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">MEDICAL</text>
+    </g>
+<g id="cell-28-medical-life-support" transform="translate(1180 856)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="medical-support"><path d="M92 31h72v37h30v42h31v36h-62v44h31v35H62v-35h31v-44H31v-36h31V68h30z" fill="#FFFDF2"/><path d="M116 88h24v22h22v24h-22v22h-24v-22H94v-24h22z" fill="#B70D14"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">28 · 医疗生命维持</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">MEDICAL LIFE SUPPORT</text>
+    </g>
+<g id="cell-29-maintenance" transform="translate(52 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="maintenance-mark" fill="#FFFDF2"><path d="M48 47h35v86l28 28V47h34v114l28-28V47h35v101l-63 63h-34l-63-63z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">29 · 维护通道</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">MAINTENANCE</text>
+    </g>
+<g id="cell-30-ladderway" transform="translate(240 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="ladder-mark" fill="#FFFDF2"><path d="M49 43h35v61h88V43h35v170h-35v-65H84v65H49z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">30 · 梯井</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">LADDERWAY</text>
+    </g>
+<g id="cell-31-intercom" transform="translate(428 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="intercom-mark" fill="#FFFDF2"><path d="M43 69h74V40l53 53-53 53v-30H43z"/><path d="M213 187h-74v29l-53-53 53-53v30h74z"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">31 · 内部通讯</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">INTERCOM</text>
+    </g>
+<g id="cell-32-storage" transform="translate(616 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="storage-mark"><rect x="52" y="52" width="152" height="152" rx="8" fill="#FFFDF2"/><rect x="75" y="75" width="106" height="106" rx="7" fill="#7D7E7B"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">32 · 普通储藏</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">STORAGE</text>
+    </g>
+<g id="cell-33-organic-storage" transform="translate(804 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#B70D14" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="organic-storage"><rect x="48" y="48" width="160" height="160" rx="8" fill="#FFFDF2"/><rect x="72" y="72" width="112" height="112" rx="7" fill="#7D7E7B"/><rect x="93" y="93" width="70" height="70" rx="6" fill="#0F5B38"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">33 · 有机物储藏</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">ORGANIC STORAGE / FOODSTUFFS</text>
+    </g>
+<g id="cell-34-refrigerated-organic-storage" transform="translate(992 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#173A76" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="refrigerated-organic"><rect x="48" y="48" width="160" height="160" rx="8" fill="#FFFDF2"/><rect x="72" y="72" width="112" height="112" rx="7" fill="#173A76"/><rect x="93" y="93" width="70" height="70" rx="6" fill="#0F5B38"/></g>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">34 · 冷藏有机物</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">REFRIGERATED ORGANIC STORAGE</text>
+    </g>
+<g id="cell-35-air-circulation" transform="translate(1180 1082)">
+      <g transform="scale(.6)"><g id="frame">
+    <rect id="outer-plate" x="6" y="6" width="244" height="244" rx="32" fill="#F4F3E7" stroke="#B9BAB5" stroke-width="3"/>
+    <rect id="signal-keyline" x="16" y="16" width="224" height="224" rx="25" fill="#7D7E7B" stroke="#B70D14" stroke-width="11"/>
+    <rect id="inner-light-keyline" x="27" y="27" width="202" height="202" rx="14" fill="none" stroke="#FFFDF2" stroke-width="5"/>
+  </g>
+  <g id="symbol">
+    <g id="air-circulation-mark" fill="none" stroke="#FFFDF2" stroke-width="16" stroke-linecap="round"><path d="M128 118V63c0-26 41-26 41 0v17"/><path d="M138 128h55c26 0 26 41 0 41h-17"/><path d="M128 138v55c0 26-41 26-41 0v-17"/><path d="M118 128H63c-26 0-26-41 0-41h17"/></g><circle cx="128" cy="128" r="15" fill="#FFFDF2"/>
+  </g>
+</g>
+      <text x="77" y="168" text-anchor="middle" font-family="Arial Narrow, sans-serif" font-size="11" font-weight="700" fill="#070707">35 · 空气循环</text>
+      <text x="77" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" letter-spacing=".7" fill="#555650">AIR CIRCULATION</text>
+    </g>
+</svg>
