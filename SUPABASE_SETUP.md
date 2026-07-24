@@ -1,10 +1,10 @@
-# Supabase 免费版接入约束
+# Supabase 免费版部署记录
 
-此文件记录在线社区接入 Supabase 时必须保持的产品约束。
+项目已于 2026-07-24 部署到 Supabase Free，项目名为 `pinewood-detective-lab`。
 
 ## 零成本配置
 
-- 使用一个 Supabase Free 项目；
+- 使用 Supabase Free `nano` 项目；
 - GitHub Pages 继续托管前端；
 - 前端只使用 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_PUBLISHABLE_KEY`；
 - 永远不要把 `service_role` 或其他私密密钥放入网页或 GitHub 仓库。
@@ -29,23 +29,33 @@
 
 - 仅允许确认已满 16 周岁的用户注册公共社区；
 - 注册时必须主动勾选年龄确认和《社区规则与免责声明》，两个选项都不能预选；
-- 不收集出生日期，仅在 `profiles` 中保存 `age_16_confirmed`、确认时间、条款版本和接受时间；
+- 不收集出生日期；年龄和条款记录单独保存在只允许本人读取的 `user_consents` 表；
 - 当前首个条款版本为 `2026-07-24-v1`，正文见 `COMMUNITY_RULES.md`；
-- 前端校验用于交互提示；接入 Supabase 后，创建 `profiles` 行时必须同时写入并由数据库约束验证；
+- 前端负责交互提示，数据库注册触发器负责强制验证并记录；
 - 年龄规则是平台的使用门槛，不能替代不同地区所需的隐私、监护人同意或其他法律审查。
 
 ## 图片上传
 
-前端所有图片入口已经限制为单张不超过 `2MB`。Supabase 接入时，还必须在服务端再次限制：
+前端所有图片入口已经限制为单张不超过 `2MB`，Storage 服务端也已完成以下配置：
 
-1. 在 Storage 中创建 `case-assets` 文件桶；
-2. 打开文件大小限制，设置为 `2MB`；
-3. MIME 类型只允许 `image/*`；
+1. `case-assets` 公开读取文件桶；
+2. 文件大小限制为 `2,097,152` 字节；
+3. MIME 类型只允许 JPEG、PNG、WebP 和 GIF；
 4. 文件路径使用 `<user-id>/<board-id>/<random-name>`；
 5. RLS 只允许用户写入和删除自己 `user-id` 目录下的文件。
 
 前端限制改善体验，Storage 文件桶限制负责真正的安全边界。
 
-## 数据库
+## 已部署数据库
 
-在 Supabase SQL Editor 中执行 `supabase/schema.sql`，然后再连接网页端。
+`supabase/schema.sql` 已在生产项目执行，包含：
+
+- `profiles`
+- `user_consents`
+- `boards`
+- `comments`
+- `reactions`
+- 注册触发器、更新时间触发器、浏览量函数
+- 数据库与 Storage RLS 策略
+
+上线验收时已验证注册、条款记录、登录、发布、公开读取、点赞、评论、2MB 上传成功和超限 413 拒绝。临时测试账号与测试数据随后全部删除。

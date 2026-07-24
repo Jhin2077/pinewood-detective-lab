@@ -128,6 +128,10 @@ export type PublicBoardPreview = {
   links: EvidenceLink[];
 };
 
+export type BoardPublishPayload = PublicBoardPreview & {
+  clientId: string;
+};
+
 const BOARD_W = 1240;
 const BOARD_H = 760;
 const MIN_SCALE = 0.05;
@@ -135,7 +139,7 @@ const MAX_SCALE = 8;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_IMAGE_LABEL = "2MB";
 const clampScale = (value: number) => Math.max(MIN_SCALE, Math.min(MAX_SCALE, value));
-const WORKSPACE_STORAGE_KEY = "pinewood-case-lab-online-empty-workspace-v3";
+const WORKSPACE_STORAGE_KEY = "pinewood-case-lab-community-workspace-v4";
 const blankMeta: BoardMeta = { caseTitle: "未命名线索板", caseCode: "BOARD-001", genre: "" };
 const blankCards: EvidenceCard[] = [];
 const blankLinks: EvidenceLink[] = [];
@@ -195,7 +199,17 @@ function decodeSnapshot(value: string): BoardSnapshot | null {
   }
 }
 
-export function DetectiveBoard({ publicPreview }: { publicPreview?: PublicBoardPreview } = {}) {
+export function DetectiveBoard({
+  publicPreview,
+  canPublish = false,
+  onPublish,
+  onRequireSignIn,
+}: {
+  publicPreview?: PublicBoardPreview;
+  canPublish?: boolean;
+  onPublish?: (payload: BoardPublishPayload) => Promise<string>;
+  onRequireSignIn?: () => void;
+} = {}) {
   const [boards, setBoards] = useState<BoardDocument[]>([INITIAL_BOARD]);
   const [activeBoardId, setActiveBoardId] = useState(INITIAL_BOARD.id);
   const [selectedId, setSelectedId] = useState("");
@@ -211,6 +225,7 @@ export function DetectiveBoard({ publicPreview }: { publicPreview?: PublicBoardP
   const [toast, setToast] = useState("");
   const [presentation, setPresentation] = useState(false);
   const [sharedView, setSharedView] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [mounted, setMounted] = useState(false);
 
@@ -881,9 +896,34 @@ export function DetectiveBoard({ publicPreview }: { publicPreview?: PublicBoardP
 
   const shareBoard = async () => {
     if (!meta.genre) {
-      showToast("请先选择案件类型，再生成公开分享链接");
+      showToast("请先选择案件类型，再发布到社区");
       return;
     }
+
+    if (onPublish) {
+      if (!canPublish) {
+        showToast("登录后才能发布案件板");
+        onRequireSignIn?.();
+        return;
+      }
+      setPublishing(true);
+      try {
+        const publicBoardId = await onPublish({
+          clientId: activeBoard.id,
+          cards,
+          links,
+          meta,
+        });
+        showToast("案件板已发布到社区");
+        window.history.replaceState(null, "", `#/board?id=${encodeURIComponent(publicBoardId)}`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "发布失败，请稍后重试");
+      } finally {
+        setPublishing(false);
+      }
+      return;
+    }
+
     const snapshot: BoardSnapshot = { cards, links, meta, savedAt: new Date().toISOString() };
     const url = `${window.location.origin}${window.location.pathname}#share=${encodeSnapshot(snapshot)}`;
     try {
@@ -896,7 +936,7 @@ export function DetectiveBoard({ publicPreview }: { publicPreview?: PublicBoardP
       document.execCommand("copy");
       textarea.remove();
     }
-    showToast("只读分享链接已复制");
+    showToast("只读链接已复制");
   };
 
   const exportBoard = () => {
@@ -1128,9 +1168,19 @@ export function DetectiveBoard({ publicPreview }: { publicPreview?: PublicBoardP
               {saveState === "saved" ? "已保存" : "保存中"}
             </button>
           )}
-          <span className="local-creation-badge"><FloppyDiskIcon size={15} />Workshop 草稿</span>
+          <span className="local-creation-badge"><FloppyDiskIcon size={15} />本地草稿</span>
           <button className="presentation-button" onClick={togglePresentation}><PresentationIcon size={17} weight="bold" /><span>展示线索板</span></button>
-          <button className="icon-button" onClick={shareBoard} title="复制只读分享链接"><ShareNetworkIcon size={19} /></button>
+          {!sharedView && (
+            <button
+              className="presentation-button"
+              onClick={shareBoard}
+              title="发布到公共案件板"
+              disabled={publishing}
+            >
+              <ShareNetworkIcon size={18} />
+              <span>{publishing ? "发布中…" : "发布到社区"}</span>
+            </button>
+          )}
         </div>
       </header>
 

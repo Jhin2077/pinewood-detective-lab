@@ -1,3 +1,4 @@
+import type { Session } from "@supabase/supabase-js";
 import {
   ChatCircleIcon,
   ClockIcon,
@@ -15,42 +16,42 @@ import {
   UserIcon,
   UserPlusIcon,
 } from "./ui-kit/icons/PinewoodIcons";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { DetectiveBoard } from "./DetectiveBoard";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  DetectiveBoard,
+  type BoardPublishPayload,
+  type PublicBoardPreview,
+} from "./DetectiveBoard";
+import {
+  addBoardComment,
+  type BoardComment,
+  type CommunityBoard,
+  type CommunityProfile,
+  getProfile,
+  getPublicBoard,
+  listBoardComments,
+  listPublicBoards,
+  publishBoard,
+  toggleBoardLike,
+} from "./communityApi";
 import { CASE_GENRES as PUBLISHABLE_CASE_GENRES } from "./caseGenres";
 import { DarkVeil } from "./components/DarkVeil";
 import { OptionWheel } from "./components/OptionWheel";
+import { supabase } from "./supabaseClient";
 
 type RouteId = "workshop" | "board";
 type CommunityTheme = "light" | "dark";
-
-type CommunityBoard = {
-  id: string;
-  title: string;
-  author: string;
-  handle: string;
-  description: string;
-  tags: string[];
-  genres: string[];
-  likes: number;
-  comments: number;
-  views: number;
-  time: string;
-  image: string;
-};
+type AuthMode = "signin" | "signup";
 
 const COMMUNITY_THEME_KEY = "pinewood-case-board-theme";
 const COMMUNITY_TERMS_VERSION = "2026-07-24-v1";
-const CLOUD_AUTH_READY = false;
-
-const CASE_GENRES = [
-  "全部案件",
-  ...PUBLISHABLE_CASE_GENRES,
-];
-
-// The public community deliberately starts empty. Supabase will become the
-// source of truth for accounts and published boards.
-const communityBoards: CommunityBoard[] = [];
+const CASE_GENRES = ["全部案件", ...PUBLISHABLE_CASE_GENRES];
 
 if ("scrollRestoration" in window.history) {
   window.history.scrollRestoration = "manual";
@@ -61,25 +62,100 @@ function routeFromHash(hash: string): RouteId {
   return hash.replace(/^#\/?/, "").split("?")[0] === "board" ? "board" : "workshop";
 }
 
-function navigate(route: RouteId) {
-  window.location.hash = `#/${route}`;
+function boardIdFromHash(hash: string): string {
+  const queryIndex = hash.indexOf("?");
+  if (queryIndex < 0) return "";
+  return new URLSearchParams(hash.slice(queryIndex + 1)).get("id") ?? "";
+}
+
+function navigate(route: RouteId, boardId = "") {
+  window.location.hash = boardId
+    ? `#/${route}?id=${encodeURIComponent(boardId)}`
+    : `#/${route}`;
+}
+
+function authErrorMessage(message: string): string {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("invalid login credentials")) return "邮箱或密码不正确。";
+  if (normalized.includes("user already registered")) return "这个邮箱已经注册，请直接登录。";
+  if (normalized.includes("password")) return "密码至少需要 6 位字符。";
+  if (normalized.includes("email")) return "请填写有效的邮箱地址。";
+  return "操作没有完成，请稍后重试。";
 }
 
 function AuthDialog({
   mode,
   onClose,
 }: {
-  mode: "signin" | "signup";
+  mode: AuthMode;
   onClose: () => void;
 }) {
   const [activeMode, setActiveMode] = useState(mode);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const isSignup = activeMode === "signup";
   const registrationReady = ageConfirmed && rulesAccepted;
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const switchMode = (nextMode: AuthMode) => {
+    setActiveMode(nextMode);
+    setMessage("");
+    setIsError(false);
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setMessage("");
+    setIsError(false);
+    setSubmitting(true);
+
+    try {
+      if (isSignup) {
+        if (!registrationReady) {
+          setMessage("请先确认年龄并接受社区规则。");
+          setIsError(true);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}${window.location.pathname}#/workshop`,
+            data: {
+              display_name: displayName.trim(),
+              age_16_confirmed: true,
+              terms_version: COMMUNITY_TERMS_VERSION,
+              terms_accepted_at: new Date().toISOString(),
+            },
+          },
+        });
+        if (error) throw error;
+
+        if (data.session) {
+          onClose();
+        } else {
+          setMessage("注册成功，请打开邮箱完成验证。");
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
+        onClose();
+      }
+    } catch (error) {
+      setMessage(authErrorMessage(error instanceof Error ? error.message : ""));
+      setIsError(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -94,25 +170,48 @@ function AuthDialog({
         <button className="community-modal-close" onClick={onClose} aria-label="关闭登录窗口">×</button>
         <span className="community-auth-mark"><UserIcon size={28} /></span>
         <p>CASE BOARD COMMUNITY</p>
-        <h2 id="community-auth-title">{activeMode === "signin" ? "登录侦探档案" : "注册新的侦探身份"}</h2>
+        <h2 id="community-auth-title">{isSignup ? "注册新的侦探身份" : "登录侦探档案"}</h2>
         <div className="community-auth-tabs">
-          <button className={activeMode === "signin" ? "is-active" : ""} onClick={() => setActiveMode("signin")}>登录</button>
-          <button className={activeMode === "signup" ? "is-active" : ""} onClick={() => setActiveMode("signup")}>注册</button>
+          <button type="button" className={!isSignup ? "is-active" : ""} onClick={() => switchMode("signin")}>登录</button>
+          <button type="button" className={isSignup ? "is-active" : ""} onClick={() => switchMode("signup")}>注册</button>
         </div>
         <form onSubmit={submit}>
           {isSignup && (
             <label>
               <span>显示名称</span>
-              <input required placeholder="你的侦探名" disabled />
+              <input
+                required
+                minLength={2}
+                maxLength={32}
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="你的侦探名"
+                autoComplete="nickname"
+              />
             </label>
           )}
           <label>
             <span>邮箱</span>
-            <input required type="email" placeholder="detective@example.com" disabled />
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="detective@example.com"
+              autoComplete="email"
+            />
           </label>
           <label>
             <span>密码</span>
-            <input required type="password" minLength={6} placeholder="至少 6 位字符" disabled />
+            <input
+              required
+              type="password"
+              minLength={6}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="至少 6 位字符"
+              autoComplete={isSignup ? "new-password" : "current-password"}
+            />
           </label>
           {isSignup && (
             <div className="community-registration-gates">
@@ -138,7 +237,7 @@ function AuthDialog({
                   <p>本社区用于发布虚构案件、悬疑创作和互动调查板，内容可能包含恐怖、超自然或令人不适的主题。</p>
                   <p>不得发布违法内容、真实个人指控、人肉搜索、隐私或敏感个人信息、威胁，以及无权使用的受版权保护内容。发布者须对自己的内容与素材权利负责。</p>
                   <p>公开案件板可被其他用户浏览、评论与传播。平台可移除违规内容或暂停相关账号；本服务不是执法、报警或紧急求助渠道，也不应被用于现实中的调查或指控。</p>
-                  <p>服务与数据不保证永久可用，请自行导出并保留重要内容。正式公测前还会补充举报与联系渠道。</p>
+                  <p>服务与数据不保证永久可用，请自行导出并保留重要内容。</p>
                   <small>条款版本：{COMMUNITY_TERMS_VERSION}</small>
                 </div>
               </details>
@@ -147,44 +246,183 @@ function AuthDialog({
               )}
             </div>
           )}
+          {message && (
+            <p className={`community-auth-message ${isError ? "is-error" : "is-success"}`} role="status">
+              {message}
+            </p>
+          )}
           <button
             className="community-auth-submit"
             type="submit"
-            disabled={!CLOUD_AUTH_READY || (isSignup && !registrationReady)}
+            disabled={submitting || (isSignup && !registrationReady)}
           >
-            {activeMode === "signin"
-              ? <><SignInIcon size={17} />云端登录即将开放</>
-              : <><UserPlusIcon size={17} />云端注册即将开放</>}
+            {isSignup
+              ? <><UserPlusIcon size={17} />{submitting ? "注册中…" : "完成注册"}</>
+              : <><SignInIcon size={17} />{submitting ? "登录中…" : "登录"}</>}
           </button>
         </form>
-        <small>
-          空白发布版不会创建假账号。接入 Supabase 后，这里才会真正注册和登录；
-          注册时仅保存年龄确认、接受时间与条款版本，不收集出生日期。
-        </small>
       </section>
     </div>
   );
 }
 
-function CommunityHome() {
+function CommentsDialog({
+  board,
+  session,
+  onClose,
+  onOpenAuth,
+  onCommentAdded,
+}: {
+  board: CommunityBoard;
+  session: Session | null;
+  onClose: () => void;
+  onOpenAuth: (mode: AuthMode) => void;
+  onCommentAdded: () => void;
+}) {
+  const [comments, setComments] = useState<BoardComment[]>([]);
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadComments = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setComments(await listBoardComments(board.id));
+    } catch {
+      setError("评论暂时无法读取。");
+    } finally {
+      setLoading(false);
+    }
+  }, [board.id]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void loadComments(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadComments]);
+
+  const submitComment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!session?.user.id || !body.trim()) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await addBoardComment(board.id, session.user.id, body);
+      setBody("");
+      await loadComments();
+      onCommentAdded();
+    } catch {
+      setError("评论没有发送成功，请稍后再试。");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="community-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="community-comments-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="community-comments-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button className="community-modal-close" onClick={onClose} aria-label="关闭评论">×</button>
+        <p>CASE DISCUSSION</p>
+        <h2 id="community-comments-title">{board.title}</h2>
+        <div className="community-comment-list">
+          {loading ? (
+            <span>正在读取讨论…</span>
+          ) : comments.length === 0 ? (
+            <span>还没有评论，留下第一条调查意见。</span>
+          ) : comments.map((comment) => (
+            <article key={comment.id}>
+              <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
+              <p>{comment.body}</p>
+            </article>
+          ))}
+        </div>
+        {error && <p className="community-comment-error">{error}</p>}
+        {session ? (
+          <form onSubmit={submitComment}>
+            <textarea
+              required
+              maxLength={1000}
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              placeholder="写下你的调查意见…"
+            />
+            <button type="submit" disabled={submitting || !body.trim()}>
+              {submitting ? "发送中…" : "发送评论"}
+            </button>
+          </form>
+        ) : (
+          <button
+            className="community-comment-login"
+            onClick={() => {
+              onClose();
+              onOpenAuth("signin");
+            }}
+          >
+            登录后参与讨论
+          </button>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function CommunityHome({
+  session,
+  profile,
+  onOpenAuth,
+  onLogout,
+}: {
+  session: Session | null;
+  profile: CommunityProfile | null;
+  onOpenAuth: (mode: AuthMode) => void;
+  onLogout: () => void;
+}) {
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState<"hot" | "new" | "top">("hot");
   const [activeTag, setActiveTag] = useState("");
   const [activeGenre, setActiveGenre] = useState("");
   const [genreWheelVersion, setGenreWheelVersion] = useState(0);
-  const [authMode, setAuthMode] = useState<"signin" | "signup" | null>(null);
+  const [boards, setBoards] = useState<CommunityBoard[]>([]);
+  const [loadingBoards, setLoadingBoards] = useState(true);
+  const [boardError, setBoardError] = useState("");
+  const [likedBoardIds, setLikedBoardIds] = useState<Set<string>>(() => new Set());
+  const [commentBoard, setCommentBoard] = useState<CommunityBoard | null>(null);
   const [theme, setTheme] = useState<CommunityTheme>(() => {
     const storedTheme = window.localStorage.getItem(COMMUNITY_THEME_KEY);
     return storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
   });
 
+  const loadBoards = useCallback(async () => {
+    setLoadingBoards(true);
+    setBoardError("");
+    try {
+      setBoards(await listPublicBoards());
+    } catch {
+      setBoardError("案件列表暂时无法读取，请稍后再试。");
+    } finally {
+      setLoadingBoards(false);
+    }
+  }, []);
+
   useEffect(() => {
     window.localStorage.setItem(COMMUNITY_THEME_KEY, theme);
   }, [theme]);
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void loadBoards(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadBoards]);
+
   const visibleBoards = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const filtered = communityBoards.filter((board) => {
+    const filtered = boards.filter((board) => {
       const searchable = [
         board.title,
         board.author,
@@ -199,11 +437,39 @@ function CommunityHome() {
     });
 
     return [...filtered].sort((a, b) => {
-      if (sortMode === "new") return communityBoards.indexOf(a) - communityBoards.indexOf(b);
+      if (sortMode === "new") return b.publishedAt.localeCompare(a.publishedAt);
       if (sortMode === "top") return b.likes - a.likes;
       return b.views + b.comments * 4 - (a.views + a.comments * 4);
     });
-  }, [activeGenre, activeTag, search, sortMode]);
+  }, [activeGenre, activeTag, boards, search, sortMode]);
+
+  const startCreating = () => {
+    if (session) navigate("board");
+    else onOpenAuth("signup");
+  };
+
+  const likeBoard = async (boardId: string) => {
+    if (!session?.user.id) {
+      onOpenAuth("signin");
+      return;
+    }
+    try {
+      const liked = await toggleBoardLike(boardId, session.user.id);
+      setLikedBoardIds((current) => {
+        const next = new Set(current);
+        if (liked) next.add(boardId);
+        else next.delete(boardId);
+        return next;
+      });
+      setBoards((current) => current.map((board) => (
+        board.id === boardId
+          ? { ...board, likes: Math.max(0, board.likes + (liked ? 1 : -1)) }
+          : board
+      )));
+    } catch {
+      setBoardError("点赞没有完成，请稍后再试。");
+    }
+  };
 
   return (
     <div className={`community-page theme-${theme}`} data-community-theme={theme}>
@@ -241,8 +507,14 @@ function CommunityHome() {
         </label>
 
         <div className="community-header-actions">
-          <button onClick={() => setAuthMode("signup")}><PlusIcon size={17} />创建案件板</button>
-          <button className="community-plain-login" onClick={() => setAuthMode("signin")}><SignInIcon size={17} />登录</button>
+          <button onClick={startCreating}><PlusIcon size={17} />创建案件板</button>
+          {session ? (
+            <button className="community-plain-login" onClick={onLogout}>
+              <UserIcon size={17} />{profile?.displayName || "我的档案"} · 退出
+            </button>
+          ) : (
+            <button className="community-plain-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={17} />登录</button>
+          )}
           <button
             className="community-theme-toggle"
             onClick={() => setTheme((current) => current === "light" ? "dark" : "light")}
@@ -258,8 +530,10 @@ function CommunityHome() {
         <aside className="community-left-rail">
           <section className="community-side-panel community-recent">
             <h2><FolderOpenIcon size={19} />最近浏览</h2>
-            <p>还没有浏览记录。接入云端后，登录用户可以从这里继续自己的调查。</p>
-            <button className="community-side-login" onClick={() => setAuthMode("signin")}><SignInIcon size={16} />登录</button>
+            <p>你打开过的公开案件会出现在这里，方便继续调查。</p>
+            {!session && (
+              <button className="community-side-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={16} />登录</button>
+            )}
           </section>
 
           <section className="community-side-panel community-genre-panel">
@@ -330,7 +604,16 @@ function CommunityHome() {
 
           <div className="community-board-list">
             {visibleBoards.map((board) => (
-              <button className="community-board-card" key={board.id}>
+              <article
+                className="community-board-card"
+                key={board.id}
+                onClick={() => navigate("board", board.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") navigate("board", board.id);
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <span className="community-board-copy">
                   <span className="community-tags">
                     {board.tags.map((tag, index) => (
@@ -350,21 +633,52 @@ function CommunityHome() {
                   <span className="community-board-author">by <b>{board.author}</b> <i>{board.handle}</i> · {board.time}</span>
                   <span className="community-board-description">{board.description}</span>
                   <span className="community-board-stats">
-                    <i><HeartIcon size={15} />{board.likes}</i>
-                    <i><ChatCircleIcon size={15} />{board.comments}</i>
+                    <button
+                      className={likedBoardIds.has(board.id) ? "is-active" : ""}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void likeBoard(board.id);
+                      }}
+                      aria-label={`点赞 ${board.title}`}
+                    >
+                      <HeartIcon size={15} weight={likedBoardIds.has(board.id) ? "fill" : "regular"} />{board.likes}
+                    </button>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setCommentBoard(board);
+                      }}
+                      aria-label={`评论 ${board.title}`}
+                    >
+                      <ChatCircleIcon size={15} />{board.comments}
+                    </button>
                     <i><EyeIcon size={15} />{board.views}</i>
                   </span>
                 </span>
-                <img className="community-board-thumb" src={board.image} alt={`${board.title} 线索板预览`} />
-              </button>
+                {board.image ? (
+                  <img className="community-board-thumb" src={board.image} alt={`${board.title} 线索板预览`} />
+                ) : (
+                  <span className="community-board-thumb community-board-thumb-empty"><FolderOpenIcon size={34} /></span>
+                )}
+              </article>
             ))}
 
-            {communityBoards.length === 0 ? (
+            {loadingBoards ? (
+              <div className="community-empty">
+                <FolderOpenIcon size={32} />
+                <strong>正在读取公共案件板</strong>
+              </div>
+            ) : boardError ? (
+              <div className="community-empty">
+                <strong>{boardError}</strong>
+                <button onClick={() => void loadBoards()}>重新加载</button>
+              </div>
+            ) : boards.length === 0 ? (
               <div className="community-empty community-empty-first">
                 <FolderOpenIcon size={34} />
                 <strong>社区里还没有公开案件板</strong>
-                <span>这里不放置示例案件。第一份公开档案将由真实用户创建。</span>
-                <button onClick={() => setAuthMode("signup")}><UserPlusIcon size={17} />注册并创建第一份档案</button>
+                <span>发布第一份案件，邀请其他侦探开始调查。</span>
+                <button onClick={startCreating}><UserPlusIcon size={17} />创建第一份档案</button>
               </div>
             ) : visibleBoards.length === 0 && (
               <div className="community-empty">
@@ -379,10 +693,19 @@ function CommunityHome() {
         <aside className="community-right-rail">
           <section className="community-account-panel">
             <span className="community-account-icon"><UserIcon size={34} /></span>
-            <strong>建立你的侦探档案</strong>
-            <p>接入 Supabase 后，登录用户可以创建、保存并公开自己的案件板。</p>
-            <button className="community-account-primary" onClick={() => setAuthMode("signin")}><SignInIcon size={17} />登录</button>
-            <button className="community-account-secondary" onClick={() => setAuthMode("signup")}><UserPlusIcon size={17} />注册</button>
+            <strong>{session ? `欢迎回来，${profile?.displayName || "侦探"}` : "建立你的侦探档案"}</strong>
+            <p>{session ? "继续创作、保存并公开你的案件板。" : "登录后创建自己的案件板，并发布到公共社区。"}</p>
+            {session ? (
+              <>
+                <button className="community-account-primary" onClick={() => navigate("board")}><PlusIcon size={17} />进入案件板</button>
+                <button className="community-account-secondary" onClick={onLogout}>退出登录</button>
+              </>
+            ) : (
+              <>
+                <button className="community-account-primary" onClick={() => onOpenAuth("signin")}><SignInIcon size={17} />登录</button>
+                <button className="community-account-secondary" onClick={() => onOpenAuth("signup")}><UserPlusIcon size={17} />注册</button>
+              </>
+            )}
           </section>
 
           <section className="community-side-panel community-guide">
@@ -390,20 +713,59 @@ function CommunityHome() {
             <ol>
               <li><b>01</b><span>注册自己的侦探身份</span></li>
               <li><b>02</b><span>从空白画布创建案件板</span></li>
-              <li><b>03</b><span>选择是否公开到社区</span></li>
+              <li><b>03</b><span>选择类型并发布到社区</span></li>
             </ol>
-            <button onClick={() => setAuthMode("signup")}>注册后开始创作</button>
+            <button onClick={startCreating}>{session ? "开始创作" : "注册后开始创作"}</button>
           </section>
         </aside>
       </div>
-
-      {authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} />}
+      {commentBoard && (
+        <CommentsDialog
+          board={commentBoard}
+          session={session}
+          onClose={() => setCommentBoard(null)}
+          onOpenAuth={onOpenAuth}
+          onCommentAdded={() => {
+            setBoards((current) => current.map((board) => (
+              board.id === commentBoard.id
+                ? { ...board, comments: board.comments + 1 }
+                : board
+            )));
+          }}
+        />
+      )}
     </div>
   );
 }
 
 export function OnlineWorkshopApp() {
   const [activeRoute, setActiveRoute] = useState<RouteId>(() => routeFromHash(window.location.hash));
+  const [activeBoardId, setActiveBoardId] = useState(() => boardIdFromHash(window.location.hash));
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<CommunityProfile | null>(null);
+  const [publicPreview, setPublicPreview] = useState<PublicBoardPreview | null>(null);
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardError, setBoardError] = useState("");
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      if (nextSession) setAuthMode(null);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user.id) return;
+    const timeout = window.setTimeout(() => {
+      void getProfile(session.user.id)
+        .then(setProfile)
+        .catch(() => setProfile(null));
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [session?.user.id]);
 
   useEffect(() => {
     if (!window.location.hash || window.location.hash.startsWith("#/facilitator")) {
@@ -415,23 +777,90 @@ export function OnlineWorkshopApp() {
         window.history.replaceState(null, "", "#/workshop");
       }
       setActiveRoute(routeFromHash(window.location.hash));
+      setActiveBoardId(boardIdFromHash(window.location.hash));
     };
 
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
+  useEffect(() => {
+    if (activeRoute !== "board" || !activeBoardId) return;
+
+    let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      setBoardLoading(true);
+      setBoardError("");
+      void getPublicBoard(activeBoardId)
+        .then((preview) => {
+          if (!cancelled) setPublicPreview(preview);
+        })
+        .catch(() => {
+          if (!cancelled) setBoardError("这个案件板不存在，或尚未公开。");
+        })
+        .finally(() => {
+          if (!cancelled) setBoardLoading(false);
+        });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [activeBoardId, activeRoute]);
+
+  const handlePublish = useCallback(async (payload: BoardPublishPayload) => {
+    if (!session?.user.id) throw new Error("请先登录，再发布案件板");
+    return publishBoard(payload, session.user.id);
+  }, [session]);
+
+  const logout = () => {
+    void supabase.auth.signOut();
+  };
+
+  let page;
   if (activeRoute === "board") {
-    return (
-      <div className="online-board-stage">
-        <DetectiveBoard />
-        <div className="online-preview-ribbon">
-          <span>CASE BOARD · EMPTY WORKSPACE</span>
-          <button onClick={() => navigate("workshop")}>← 返回公共案件板</button>
+    if (activeBoardId && boardLoading) {
+      page = <div className="online-board-status"><FolderOpenIcon size={34} /><strong>正在打开案件板…</strong></div>;
+    } else if (activeBoardId && boardError) {
+      page = (
+        <div className="online-board-status">
+          <strong>{boardError}</strong>
+          <button onClick={() => navigate("workshop")}>返回公共案件板</button>
         </div>
-      </div>
+      );
+    } else {
+      page = (
+        <div className="online-board-stage">
+          <DetectiveBoard
+            key={activeBoardId || "local-editor"}
+            publicPreview={activeBoardId ? publicPreview ?? undefined : undefined}
+            canPublish={Boolean(session)}
+            onPublish={handlePublish}
+            onRequireSignIn={() => setAuthMode("signin")}
+          />
+          <div className="online-preview-ribbon">
+            <span>CASE BOARD · COMMUNITY WORKSPACE</span>
+            <button onClick={() => navigate("workshop")}>← 返回公共案件板</button>
+          </div>
+        </div>
+      );
+    }
+  } else {
+    page = (
+      <CommunityHome
+        session={session}
+        profile={profile}
+        onOpenAuth={setAuthMode}
+        onLogout={logout}
+      />
     );
   }
 
-  return <CommunityHome />;
+  return (
+    <>
+      {page}
+      {authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} />}
+    </>
+  );
 }

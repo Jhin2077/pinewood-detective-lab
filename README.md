@@ -5,19 +5,20 @@ Pinewood Detective Lab 的独立在线案件板社区。
 此工程与 `04_空白创作版_源代码` 分开维护：
 
 - `04`：本地稳定版，继续支持离线存档；
-- `05`：在线社区版，从零内容开始，后续使用 Supabase 免费方案承载账号和社区数据；
+- `05`：在线社区版，使用 Supabase Free 承载账号、社区数据和案件图片；
 - 两端不会自动混用浏览器存档。
 
 ## 当前发布状态
 
 - 公共社区不包含示例案件、示例用户、示例评论或模拟排行；
-- 登录与注册不会创建假账号，在 Supabase 接入前保持禁用；
+- 邮箱注册、验证、登录和退出已经连接真实 Supabase Auth；
 - 注册必须确认已满 16 周岁并接受社区规则与免责声明，不收集出生日期；
 - `#/board` 是无预设卡片的空白案件板编辑器；
-- 每个案件板包含一个主类型字段，未选择类型时不能生成公开分享链接；
-- 所有图片入口限制为单张不超过 2MB；
+- 每个案件板必须选择主类型后才能发布到公共社区；
+- 社区支持公开浏览、分类筛选、排行、点赞和评论；
+- 所有图片入口及 Storage 服务端均限制为单张不超过 2MB；
 - 旧在线演示存档使用不同的存储版本，不会进入当前空白版；
-- GitHub Pages 只负责静态前端，Supabase 将负责真实账号、数据库和附件。
+- GitHub Pages 托管前端，Supabase 负责账号、数据库和附件。
 
 ## 本地运行
 
@@ -46,15 +47,15 @@ npm run build
 
 本地保留了自动发布工作流模板。当前 GitHub 登录令牌没有 `workflow` 权限，因此模板不会上传；以后授予该权限后可以改为 `main` 推送即自动发布。
 
-## Supabase 下一阶段
+## Supabase
 
-创建免费 Supabase 项目后，把公开连接参数配置为：
+生产环境连接参数位于 `.env.production`：
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-不要把 `service_role` 或任何私密密钥放入前端或 GitHub 仓库。
+Publishable Key 是面向浏览器的公开密钥，所有真实权限由数据库和 Storage 的 RLS 策略控制。不要把 Secret Key、`service_role` 或数据库密码放入前端或 GitHub 仓库。
 
-数据库结构、注册门槛、案件类型和 Storage 的 2MB 服务端限制见 `SUPABASE_SETUP.md`，社区规则正文见 `COMMUNITY_RULES.md`。
+完整数据库结构见 `supabase/schema.sql`，部署状态与安全约束见 `SUPABASE_SETUP.md`，社区规则正文见 `COMMUNITY_RULES.md`。

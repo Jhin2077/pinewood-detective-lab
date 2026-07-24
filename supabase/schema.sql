@@ -3,20 +3,25 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null check (char_length(display_name) between 2 and 32),
-  handle text unique,
-  age_16_confirmed boolean not null check (age_16_confirmed),
-  age_confirmed_at timestamptz not null default now(),
-  terms_version text not null,
-  terms_accepted_at timestamptz not null default now(),
+  handle text not null unique,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table if not exists public.user_consents (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  age_16_confirmed boolean not null check (age_16_confirmed),
+  age_confirmed_at timestamptz not null default now(),
+  terms_version text not null check (char_length(terms_version) between 1 and 64),
+  terms_accepted_at timestamptz not null default now()
 );
 
 create table if not exists public.boards (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
+  client_id text not null check (char_length(client_id) between 1 and 120),
   title text not null check (char_length(title) between 1 and 80),
-  case_code text not null,
+  case_code text not null check (char_length(case_code) between 1 and 60),
   genre text not null check (
     genre in (
       '灵异',
@@ -31,11 +36,16 @@ create table if not exists public.boards (
     )
   ),
   description text not null default '',
-  snapshot jsonb not null default '{"cards":[],"links":[]}'::jsonb,
+  tags text[] not null default '{}',
+  cover_url text,
+  snapshot jsonb not null default '{"cards":[],"links":[]}'::jsonb
+    check (jsonb_typeof(snapshot) = 'object'),
   is_public boolean not null default false,
+  view_count bigint not null default 0 check (view_count >= 0),
   published_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (owner_id, client_id)
 );
 
 create table if not exists public.comments (
@@ -55,93 +65,284 @@ create table if not exists public.reactions (
   primary key (board_id, user_id, kind)
 );
 
-create index if not exists boards_public_genre_published_idx
-  on public.boards (genre, published_at desc)
-  where is_public = true;
-
-create index if not exists boards_owner_updated_idx
-  on public.boards (owner_id, updated_at desc);
-
+create index if not exists boards_public_published_idx
+  on public.boards (is_public, published_at desc);
+create index if not exists boards_genre_public_idx
+  on public.boards (genre, is_public, published_at desc);
 create index if not exists comments_board_created_idx
   on public.comments (board_id, created_at);
 
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists boards_set_updated_at on public.boards;
+create trigger boards_set_updated_at
+before update on public.boards
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists comments_set_updated_at on public.comments;
+create trigger comments_set_updated_at
+before update on public.comments
+for each row execute procedure public.set_updated_at();
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  requested_name text;
+  requested_terms text;
+  age_confirmed boolean;
+begin
+  requested_name := trim(coalesce(new.raw_user_meta_data ->> 'display_name', ''));
+  requested_terms := trim(coalesce(new.raw_user_meta_data ->> 'terms_version', ''));
+  age_confirmed := coalesce((new.raw_user_meta_data ->> 'age_16_confirmed')::boolean, false);
+
+  if char_length(requested_name) < 2 or char_length(requested_name) > 32 then
+    raise exception 'A valid display name is required';
+  end if;
+  if not age_confirmed or requested_terms = '' then
+    raise exception 'Age and terms confirmation are required';
+  end if;
+
+  insert into public.profiles (id, display_name, handle)
+  values (
+    new.id,
+    requested_name,
+    'detective_' || replace(left(new.id::text, 8), '-', '')
+  );
+
+  insert into public.user_consents (
+    user_id,
+    age_16_confirmed,
+    age_confirmed_at,
+    terms_version,
+    terms_accepted_at
+  )
+  values (
+    new.id,
+    true,
+    now(),
+    requested_terms,
+    coalesce(
+      nullif(new.raw_user_meta_data ->> 'terms_accepted_at', '')::timestamptz,
+      now()
+    )
+  );
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute procedure public.handle_new_user();
+
+create or replace function public.increment_board_views(target_board_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.boards
+  set view_count = view_count + 1
+  where id = target_board_id
+    and is_public = true;
+$$;
+
 alter table public.profiles enable row level security;
+alter table public.user_consents enable row level security;
 alter table public.boards enable row level security;
 alter table public.comments enable row level security;
 alter table public.reactions enable row level security;
 
+drop policy if exists "profiles are publicly readable" on public.profiles;
 create policy "profiles are publicly readable"
   on public.profiles for select
   using (true);
 
-create policy "users create their own profile"
-  on public.profiles for insert
-  to authenticated
-  with check ((select auth.uid()) = id);
-
+drop policy if exists "users update their own profile" on public.profiles;
 create policy "users update their own profile"
   on public.profiles for update
   to authenticated
   using ((select auth.uid()) = id)
   with check ((select auth.uid()) = id);
 
-create policy "public boards and own drafts are readable"
+drop policy if exists "users read their own consents" on public.user_consents;
+create policy "users read their own consents"
+  on public.user_consents for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "users update their own consents" on public.user_consents;
+create policy "users update their own consents"
+  on public.user_consents for update
+  to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id and age_16_confirmed);
+
+drop policy if exists "public boards are readable" on public.boards;
+create policy "public boards are readable"
   on public.boards for select
   using (is_public or (select auth.uid()) = owner_id);
 
+drop policy if exists "users create their own boards" on public.boards;
 create policy "users create their own boards"
   on public.boards for insert
   to authenticated
   with check ((select auth.uid()) = owner_id);
 
+drop policy if exists "users update their own boards" on public.boards;
 create policy "users update their own boards"
   on public.boards for update
   to authenticated
   using ((select auth.uid()) = owner_id)
   with check ((select auth.uid()) = owner_id);
 
+drop policy if exists "users delete their own boards" on public.boards;
 create policy "users delete their own boards"
   on public.boards for delete
   to authenticated
   using ((select auth.uid()) = owner_id);
 
-create policy "comments on visible boards are readable"
+drop policy if exists "public comments are readable" on public.comments;
+create policy "public comments are readable"
   on public.comments for select
   using (
     exists (
-      select 1
-      from public.boards
+      select 1 from public.boards
       where boards.id = comments.board_id
         and (boards.is_public or boards.owner_id = (select auth.uid()))
     )
   );
 
-create policy "users create their own comments"
+drop policy if exists "authenticated users create comments" on public.comments;
+create policy "authenticated users create comments"
   on public.comments for insert
   to authenticated
-  with check ((select auth.uid()) = author_id);
+  with check (
+    (select auth.uid()) = author_id
+    and exists (
+      select 1 from public.boards
+      where boards.id = comments.board_id
+        and boards.is_public
+    )
+  );
 
+drop policy if exists "users update their own comments" on public.comments;
 create policy "users update their own comments"
   on public.comments for update
   to authenticated
   using ((select auth.uid()) = author_id)
   with check ((select auth.uid()) = author_id);
 
+drop policy if exists "users delete their own comments" on public.comments;
 create policy "users delete their own comments"
   on public.comments for delete
   to authenticated
   using ((select auth.uid()) = author_id);
 
-create policy "reactions are publicly readable"
+drop policy if exists "public reactions are readable" on public.reactions;
+create policy "public reactions are readable"
   on public.reactions for select
-  using (true);
+  using (
+    exists (
+      select 1 from public.boards
+      where boards.id = reactions.board_id
+        and (boards.is_public or boards.owner_id = (select auth.uid()))
+    )
+  );
 
+drop policy if exists "users create their own reactions" on public.reactions;
 create policy "users create their own reactions"
   on public.reactions for insert
   to authenticated
   with check ((select auth.uid()) = user_id);
 
+drop policy if exists "users delete their own reactions" on public.reactions;
 create policy "users delete their own reactions"
   on public.reactions for delete
   to authenticated
   using ((select auth.uid()) = user_id);
+
+grant usage on schema public to anon, authenticated;
+grant select on public.profiles to anon, authenticated;
+grant update on public.profiles to authenticated;
+grant select, insert, update, delete on public.boards to authenticated;
+grant select on public.boards to anon;
+grant select, insert, update, delete on public.comments to authenticated;
+grant select on public.comments to anon;
+grant select, insert, delete on public.reactions to authenticated;
+grant select on public.reactions to anon;
+grant select, update on public.user_consents to authenticated;
+grant execute on function public.increment_board_views(uuid) to anon, authenticated;
+
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+values (
+  'case-assets',
+  'case-assets',
+  true,
+  2097152,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "case assets are publicly readable" on storage.objects;
+create policy "case assets are publicly readable"
+  on storage.objects for select
+  using (bucket_id = 'case-assets');
+
+drop policy if exists "users upload their own case assets" on storage.objects;
+create policy "users upload their own case assets"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'case-assets'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+drop policy if exists "users update their own case assets" on storage.objects;
+create policy "users update their own case assets"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'case-assets'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  )
+  with check (
+    bucket_id = 'case-assets'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+drop policy if exists "users delete their own case assets" on storage.objects;
+create policy "users delete their own case assets"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'case-assets'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
