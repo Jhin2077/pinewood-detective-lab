@@ -26,7 +26,6 @@ type PublicBoardRow = {
   tags: string[] | null;
   view_count: number | null;
   published_at: string | null;
-  cover_url: string | null;
   snapshot: PublicBoardPreview & { savedAt?: string };
   profiles: ProfileJoin | ProfileJoin[] | null;
   comments: CountJoin | null;
@@ -48,7 +47,7 @@ export type CommunityBoard = {
   views: number;
   publishedAt: string;
   time: string;
-  image: string;
+  preview: PublicBoardPreview;
 };
 
 export type CommunityProfile = {
@@ -163,7 +162,6 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
       tags,
       view_count,
       published_at,
-      cover_url,
       snapshot,
       profiles!boards_owner_id_fkey(display_name, handle),
       comments(count),
@@ -192,7 +190,7 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
       views: Number(row.view_count ?? 0),
       publishedAt,
       time: relativeTime(publishedAt),
-      image: row.cover_url ?? "",
+      preview: row.snapshot,
     };
   });
 }

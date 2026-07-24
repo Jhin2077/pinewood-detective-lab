@@ -34,6 +34,7 @@ import {
   type DragEvent as ReactDragEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -206,12 +207,14 @@ export function DetectiveBoard({
   onPublish,
   onDeletePublished,
   onRequireSignIn,
+  headerAddon,
 }: {
   publicPreview?: PublicBoardPreview;
   canPublish?: boolean;
   onPublish?: (payload: BoardPublishPayload) => Promise<string>;
   onDeletePublished?: (clientId: string) => Promise<void>;
   onRequireSignIn?: () => void;
+  headerAddon?: ReactNode;
 } = {}) {
   const [boards, setBoards] = useState<BoardDocument[]>([INITIAL_BOARD]);
   const [activeBoardId, setActiveBoardId] = useState(INITIAL_BOARD.id);
@@ -1003,12 +1006,22 @@ export function DetectiveBoard({
     event.target.value = "";
   };
 
+  function removeCard(cardId: string) {
+    if (sharedView) return;
+    const target = cards.find((card) => card.id === cardId);
+    if (!target) return;
+    if (!window.confirm(`确认删除线索“${target.title}”？与它相关的连线也会一并删除，此操作无法撤销。`)) return;
+
+    setCards((current) => current.filter((card) => card.id !== cardId));
+    setLinks((current) => current.filter((link) => link.from !== cardId && link.to !== cardId));
+    setSelectedId((current) => current === cardId ? "" : current);
+    setContextMenu(null);
+    showToast("线索已从案件板删除");
+  }
+
   function removeSelected() {
-    if (!selectedId || sharedView) return;
-    setCards((current) => current.filter((card) => card.id !== selectedId));
-    setLinks((current) => current.filter((link) => link.from !== selectedId && link.to !== selectedId));
-    setSelectedId("");
-    showToast("线索已移出案件板");
+    if (!selectedId) return;
+    removeCard(selectedId);
   }
 
   const togglePresentation = async () => {
@@ -1166,25 +1179,16 @@ export function DetectiveBoard({
           <div>
             <div className="brand-line"><strong>Pinewood Detective Lab</strong><span>松木镇侦探俱乐部</span></div>
             <div className="case-line">
-              <input aria-label="案件名称" value={meta.caseTitle} onChange={(event) => setMeta((current) => ({ ...current, caseTitle: event.target.value }))} readOnly={sharedView} />
+              <span>CASE ID</span>
               <input className="case-code-input" aria-label="案件编号" value={meta.caseCode} onChange={(event) => setMeta((current) => ({ ...current, caseCode: event.target.value }))} readOnly={sharedView} />
-              <select
-                className="case-genre-select"
-                aria-label="案件类型"
-                value={meta.genre}
-                onChange={(event) => setMeta((current) => ({ ...current, genre: event.target.value as CaseGenre | "" }))}
-                disabled={sharedView}
-                required
-              >
-                <option value="">选择案件类型</option>
-                {CASE_GENRES.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
-              </select>
             </div>
           </div>
         </div>
+        {headerAddon && <div className="board-header-addon">{headerAddon}</div>}
         <div className="board-switcher" aria-label="当前档案板">
-          <span>当前档案板</span>
+          <span>当前案件板</span>
           <select
+            className="board-index-select"
             value={activeBoard.id}
             onChange={(event) => switchBoard(event.target.value)}
             disabled={sharedView}
@@ -1192,9 +1196,28 @@ export function DetectiveBoard({
           >
             {boards.map((board, index) => (
               <option key={board.id} value={board.id}>
-                {String(index + 1).padStart(2, "0")} · {board.meta.caseTitle}
+                {String(index + 1).padStart(2, "0")}
               </option>
             ))}
+          </select>
+          <input
+            className="board-title-input"
+            aria-label="案件名称"
+            value={meta.caseTitle}
+            onChange={(event) => setMeta((current) => ({ ...current, caseTitle: event.target.value }))}
+            placeholder="输入案件名称"
+            readOnly={sharedView}
+          />
+          <select
+            className="board-genre-select"
+            aria-label="案件类型"
+            value={meta.genre}
+            onChange={(event) => setMeta((current) => ({ ...current, genre: event.target.value as CaseGenre | "" }))}
+            disabled={sharedView}
+            required
+          >
+            <option value="">选择类型</option>
+            {CASE_GENRES.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
           </select>
           {!sharedView && (
             <button onClick={startBlankBoard} title="新建空白档案板" aria-label="新建空白档案板">
@@ -1430,6 +1453,9 @@ export function DetectiveBoard({
               )}
             </div>
           )}
+          <button className="context-delete-action" onClick={() => removeCard(contextCard.id)}>
+            <TrashIcon size={15} />删除该线索
+          </button>
         </div>
       )}
 
@@ -1616,7 +1642,7 @@ export function DetectiveBoard({
       <footer className="view-switcher">
         <button className={viewMode === "board" ? "active" : ""} onClick={() => setViewMode("board")}><PushPinIcon size={17} weight="fill" /><span>证据墙</span></button>
         <button className={viewMode === "timeline" ? "active" : ""} onClick={() => setViewMode("timeline")}><ClockIcon size={17} /><span>案件时间线</span></button>
-        <div className={`footer-timeline ${cards.length === 0 ? "is-empty" : ""}`} aria-label="案件时间线摘要">
+        <div className={`footer-timeline ${cards.length === 0 ? "is-empty" : ""} ${chronologyCards.length < 2 ? "is-sparse" : ""}`} aria-label="案件时间线摘要">
           {chronologyCards.map((card) => (
             <button key={card.id} className={card.id === selectedId ? "active" : ""} onClick={() => setSelectedId(card.id)} title={`${card.date} · ${card.title}`}>
               <span className="footer-time-dot" />

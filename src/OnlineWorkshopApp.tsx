@@ -44,6 +44,7 @@ import {
   toggleBoardLike,
 } from "./communityApi";
 import { CASE_GENRES as PUBLISHABLE_CASE_GENRES } from "./caseGenres";
+import { BoardThumbnail } from "./components/BoardThumbnail";
 import { DarkVeil } from "./components/DarkVeil";
 import { OptionWheel } from "./components/OptionWheel";
 import { supabase } from "./supabaseClient";
@@ -708,11 +709,7 @@ function CommunityHome({
                     )}
                   </span>
                 </span>
-                {board.image ? (
-                  <img className="community-board-thumb" src={board.image} alt={`${board.title} 线索板预览`} />
-                ) : (
-                  <span className="community-board-thumb community-board-thumb-empty"><FolderOpenIcon size={34} /></span>
-                )}
+                <BoardThumbnail preview={board.preview} title={board.title} />
               </article>
             ))}
 
@@ -922,21 +919,27 @@ export function OnlineWorkshopApp() {
             onPublish={handlePublish}
             onDeletePublished={handleDeletePublished}
             onRequireSignIn={() => setAuthMode("signin")}
-          />
-          <div className="online-preview-ribbon">
-            <span>CASE BOARD · COMMUNITY WORKSPACE</span>
-            {activeBoardId && session?.user.id === publicBoardOwnerId && (
-              <button
-                className="online-delete-published"
-                disabled={deletingActiveBoard}
-                onClick={() => void deleteActiveBoard()}
-              >
-                <TrashIcon size={14} />
-                {deletingActiveBoard ? "删除中…" : "删除我的案件"}
-              </button>
+            headerAddon={(
+              <div className="online-preview-ribbon" aria-label="社区案件操作">
+                <span>COMMUNITY</span>
+                {activeBoardId && session?.user.id === publicBoardOwnerId && (
+                  <button
+                    className="online-delete-published"
+                    disabled={deletingActiveBoard}
+                    onClick={() => void deleteActiveBoard()}
+                    title="删除我的公开案件"
+                  >
+                    <TrashIcon size={14} />
+                    <span>{deletingActiveBoard ? "删除中…" : "删除案件"}</span>
+                  </button>
+                )}
+                <button onClick={() => navigate("workshop")} title="返回公共案件板">
+                  <FolderOpenIcon size={14} />
+                  <span>返回社区</span>
+                </button>
+              </div>
             )}
-            <button onClick={() => navigate("workshop")}>← 返回公共案件板</button>
-          </div>
+          />
         </div>
       );
     }
