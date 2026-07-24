@@ -38,12 +38,13 @@ npm run build
 
 ## GitHub Pages
 
-推送到 `main` 后，`.github/workflows/deploy-pages.yml` 会自动：
+当前线上站点从 `gh-pages` 分支根目录发布，`main` 保存源代码。更新网页时：
 
-1. 安装依赖；
-2. 执行类型检查和 Lint；
-3. 构建 Vite 静态文件；
-4. 发布 `dist` 到 GitHub Pages。
+1. 执行类型检查、Lint 和生产构建；
+2. 将 `dist` 的完整内容发布到 `gh-pages` 分支；
+3. 等待 GitHub Pages 状态变为 `built` 后再验收线上地址。
+
+本地保留了自动发布工作流模板。当前 GitHub 登录令牌没有 `workflow` 权限，因此模板不会上传；以后授予该权限后可以改为 `main` 推送即自动发布。
 
 ## Supabase 下一阶段
 
