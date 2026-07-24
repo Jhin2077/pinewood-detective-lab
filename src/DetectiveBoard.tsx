@@ -208,6 +208,8 @@ export function DetectiveBoard({
   onDeletePublished,
   onRequireSignIn,
   headerAddon,
+  headerStatusAddon,
+  inspectorHeaderAddon,
 }: {
   publicPreview?: PublicBoardPreview;
   canPublish?: boolean;
@@ -215,6 +217,8 @@ export function DetectiveBoard({
   onDeletePublished?: (clientId: string) => Promise<void>;
   onRequireSignIn?: () => void;
   headerAddon?: ReactNode;
+  headerStatusAddon?: ReactNode;
+  inspectorHeaderAddon?: ReactNode;
 } = {}) {
   const [boards, setBoards] = useState<BoardDocument[]>([INITIAL_BOARD]);
   const [activeBoardId, setActiveBoardId] = useState(INITIAL_BOARD.id);
@@ -337,7 +341,7 @@ export function DetectiveBoard({
         setActiveBoardId(sharedBoard.id);
         setSelectedId(preview.cards[0]?.id ?? "");
         setSharedView(true);
-        setPresentation(true);
+        setPresentation(false);
       } else if (hash.startsWith("#share=")) {
         const parsed = decodeSnapshot(hash.slice(7));
         if (parsed && Array.isArray(parsed.cards)) {
@@ -1177,7 +1181,7 @@ export function DetectiveBoard({
         <div className="brand-block">
           <div className="brand-mark"><BroadcastIcon size={22} weight="duotone" /></div>
           <div>
-            <div className="brand-line"><strong>Pinewood Detective Lab</strong><span>松木镇侦探俱乐部</span></div>
+            <div className="brand-line"><strong>Pinewood Detective Lab</strong></div>
             <div className="case-line">
               <span>CASE ID</span>
               <input className="case-code-input" aria-label="案件编号" value={meta.caseCode} onChange={(event) => setMeta((current) => ({ ...current, caseCode: event.target.value }))} readOnly={sharedView} />
@@ -1226,6 +1230,7 @@ export function DetectiveBoard({
           )}
         </div>
         <div className="top-actions">
+          {headerStatusAddon}
           {sharedView ? (
             <span className="readonly-badge"><EyeIcon size={15} />只读调查 · 可拖动线索</span>
           ) : (
@@ -1466,11 +1471,14 @@ export function DetectiveBoard({
               <span>{inspectorMode === "library" ? "ASSET LIBRARY" : "CASE DRAWER"}</span>
               <strong>{inspectorMode === "library" ? "素材库" : "档案抽屉"}</strong>
             </div>
-            {inspectorMode === "library" ? (
-              <button onClick={() => setInspectorMode("card")} aria-label="关闭素材库"><XIcon size={17} /></button>
-            ) : selected ? (
-              <button onClick={() => setSelectedId("")} aria-label="关闭档案"><XIcon size={17} /></button>
-            ) : null}
+            <div className="inspector-header-actions">
+              {inspectorMode === "card" && inspectorHeaderAddon}
+              {inspectorMode === "library" ? (
+                <button onClick={() => setInspectorMode("card")} aria-label="关闭素材库"><XIcon size={17} /></button>
+              ) : selected ? (
+                <button onClick={() => setSelectedId("")} aria-label="关闭档案"><XIcon size={17} /></button>
+              ) : null}
+            </div>
           </div>
           <section className="current-board-panel">
             <div className="current-board-kicker">

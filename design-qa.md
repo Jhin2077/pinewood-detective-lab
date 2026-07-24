@@ -1,5 +1,63 @@
 # Design QA
 
+## Current iteration — community identity, presence, comments, and rail order
+
+- Source visual truth:
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-1630b708-738b-4ac8-9178-02cd8de1d7e2.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-b2aa7655-0b20-4c68-a0ef-4296aaf45450.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-753e2008-056c-4203-b2cb-27992a7693de.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-be753ba7-01c2-44a4-9b24-498fd4bf14d2.png`
+- Browser-rendered implementation:
+  - `C:\Users\ALIENWARE\Desktop\一些AI玩具\谜档-版本合集\05_在线Workshop版_源代码\qa-community-1664x792.png`
+- Combined comparison:
+  - `C:\Users\ALIENWARE\Desktop\一些AI玩具\谜档-版本合集\05_在线Workshop版_源代码\qa-community-comparison.png`
+- Source pixels: 1918 × 792. Implementation pixels and CSS viewport: 1664 × 792 at browser density 1. The combined comparison normalizes both images to 396 px height without changing either image's aspect ratio.
+- State: light-theme public community, signed-out account card, two real Supabase cases. A public case was also opened in read-only workspace mode at 1920 × 768, 1365 × 768, and 1266 × 768.
+
+### Current full-view and focused comparison evidence
+
+The same-frame comparison shows the requested structural change clearly: the left rail now begins immediately with the case-type wheel, while “最近浏览” sits below “社区如何运作” in the right rail. The feed retains the existing column width, board cards, corkboard miniatures, red nested borders, and light/dark token system.
+
+Focused browser inspection of the case board confirms that removing “松木镇侦探俱乐部” leaves the brand compact. At 1920 px, the brand ends at x=355, community actions end at x=517, the centered board switcher occupies x=745–1175, and all right actions end at x=1906. At 1365 px, the header uses two rows: community actions end at x=409, while the board switcher occupies x=222.5–1142.5 on the second row. No persistent control is clipped.
+
+The inspector-focused state shows the new “协助留言” control in the requested header slot. Activating it replaces the inspector area with the real public comment list and a sign-in action. The viewer-presence slot shows the real eye count and reserves an overlapping-avatar group for authenticated viewers.
+
+### Current findings and iteration history
+
+- [P1] The eye count was static-looking and did not expose real visit behavior.
+  - Fix: each public case open now calls the backend `record_board_view` function. An anonymous click increased Waco from 0 to 1, leaving and clicking again increased it to 2.
+  - Post-fix evidence: both the case header and the reloaded community card showed the updated count.
+
+- [P1] Public cases had no visible viewer-presence or direct in-board discussion entry.
+  - Fix: added a real recent-viewer stack in the top action area and an “协助留言” button with live count in the inspector header. The full comment panel reads existing Supabase comments and uses the existing sign-in gate.
+  - Post-fix evidence: Waco displayed one real comment and the existing JHIN message in the panel; signed-out posting correctly showed “登录后参与调查”.
+
+- [P2] The brand and header controls were overly wide and could appear clipped.
+  - Fix: removed the redundant Chinese brand subtitle, reduced the stable brand width, and preserved the two-row breakpoint below 1680 px.
+  - Post-fix evidence: measured desktop layouts at 1920, 1365, and 1266 px show separated, non-overlapping control regions.
+
+- [P2] “最近浏览” occupied the top-left position and pushed the case-type wheel down.
+  - Fix: moved the section below “社区如何运作” and connected it to the authenticated user's real `board_views` records. The left rail now begins with the wheel.
+  - Post-fix evidence: the combined comparison shows the requested rail order, with no feed-width change.
+
+### Current required fidelity surfaces
+
+- Fonts and typography: the existing Wire One co-brand, compact monospace labels, Chinese UI weights, truncation behavior, and hierarchy remain intact.
+- Spacing and layout rhythm: the left wheel begins at the rail's first panel position; the right rail stacks account, guide, and recent history with the existing 22 px panel rhythm.
+- Colors and visual tokens: the established signal red, paper, charcoal, border, and day/night variables were reused without introducing a new palette.
+- Image quality and assets: user avatars use uploaded raster images; empty avatars use the existing editable icon library. Existing corkboard and case-card imagery remain unchanged.
+- Copy and content: the community subtitle is exactly “松木镇公共案件社区访问系统”; the redundant English suffix and case-board Chinese brand suffix are removed.
+
+### Current interaction and console checks
+
+- Applied the Supabase schema update successfully in the Codex browser.
+- Opened a real public case twice through the community and confirmed eye count 0 → 1 → 2.
+- Opened and closed the real case comment panel; one existing comment rendered.
+- Confirmed signed-out comment submission remains gated by login.
+- Confirmed the case-type wheel is the first left-rail panel and recent history is the final right-rail panel.
+- Browser console warnings/errors: none.
+- Residual test gap: authenticated avatar upload and multi-user avatar stacking need a second signed-in community user to exercise visually; schema, RLS, storage limits, UI paths, typecheck, lint, and build all pass.
+
 ## Comparison target
 
 - Source visual truth:

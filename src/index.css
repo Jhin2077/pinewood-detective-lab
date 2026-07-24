@@ -83,7 +83,7 @@ textarea:focus-visible {
 }
 
 .brand-block {
-  min-width: 470px;
+  min-width: 340px;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -952,6 +952,14 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.inspector-header .inspector-header-actions {
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
 .inspector-header strong {

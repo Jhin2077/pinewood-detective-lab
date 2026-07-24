@@ -14,14 +14,18 @@ import {
   SunIcon,
   TrashIcon,
   TrendUpIcon,
+  UploadSimpleIcon,
   UserIcon,
   UserPlusIcon,
 } from "./ui-kit/icons/PinewoodIcons";
 import {
+  type ChangeEvent,
+  type CSSProperties,
   type FormEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -32,6 +36,7 @@ import {
 import {
   addBoardComment,
   type BoardComment,
+  type BoardViewer,
   type CommunityBoard,
   type CommunityProfile,
   deleteOwnBoard,
@@ -39,9 +44,11 @@ import {
   getProfile,
   getPublicBoard,
   listBoardComments,
+  listRecentBoardIds,
   listPublicBoards,
   publishBoard,
   toggleBoardLike,
+  uploadProfileAvatar,
 } from "./communityApi";
 import { CASE_GENRES as PUBLISHABLE_CASE_GENRES } from "./caseGenres";
 import { BoardThumbnail } from "./components/BoardThumbnail";
@@ -102,6 +109,29 @@ function authErrorMessage(message: string): string {
     return "请填写有效的邮箱地址。";
   }
   return "操作没有完成，请稍后重试。";
+}
+
+function ProfileAvatar({
+  url,
+  name,
+  size = 34,
+}: {
+  url?: string;
+  name: string;
+  size?: number;
+}) {
+  return (
+    <span
+      className={`online-avatar ${url ? "has-image" : ""}`}
+      style={{ "--avatar-size": `${size}px` } as CSSProperties}
+      title={name}
+      aria-label={name}
+    >
+      {url
+        ? <img src={url} alt={name} />
+        : <UserIcon size={Math.max(14, Math.round(size * 0.52))} />}
+    </span>
+  );
 }
 
 function AuthDialog({
@@ -359,8 +389,11 @@ function CommentsDialog({
             <span>还没有评论，留下第一条调查意见。</span>
           ) : comments.map((comment) => (
             <article key={comment.id}>
-              <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
-              <p>{comment.body}</p>
+              <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={32} />
+              <div>
+                <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
+                <p>{comment.body}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -394,16 +427,131 @@ function CommentsDialog({
   );
 }
 
+function BoardCommentsPanel({
+  boardId,
+  boardTitle,
+  session,
+  onClose,
+  onOpenAuth,
+  onCountChange,
+}: {
+  boardId: string;
+  boardTitle: string;
+  session: Session | null;
+  onClose: () => void;
+  onOpenAuth: (mode: AuthMode) => void;
+  onCountChange: (count: number) => void;
+}) {
+  const [comments, setComments] = useState<BoardComment[]>([]);
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadComments = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const nextComments = await listBoardComments(boardId);
+      setComments(nextComments);
+      onCountChange(nextComments.length);
+    } catch {
+      setError("协助留言暂时无法读取。");
+    } finally {
+      setLoading(false);
+    }
+  }, [boardId, onCountChange]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void loadComments(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadComments]);
+
+  const submitComment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!session?.user.id || !body.trim()) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await addBoardComment(boardId, session.user.id, body);
+      setBody("");
+      await loadComments();
+    } catch {
+      setError("留言没有发送成功，请稍后再试。");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <aside className="online-case-comments-panel" aria-label="协助探案的留言">
+      <header>
+        <div>
+          <small>CASE DISCUSSION</small>
+          <strong>协助探案的留言</strong>
+        </div>
+        <button onClick={onClose} aria-label="关闭协助留言">×</button>
+      </header>
+      <div className="online-case-comments-title">
+        <span>当前案件</span>
+        <strong>{boardTitle}</strong>
+        <small>{comments.length} 条公开留言</small>
+      </div>
+      <div className="online-case-comments-list">
+        {loading ? (
+          <span>正在读取协助留言…</span>
+        ) : comments.length === 0 ? (
+          <span>还没有留言。你可以留下第一条调查意见。</span>
+        ) : comments.map((comment) => (
+          <article key={comment.id}>
+            <ProfileAvatar url={comment.avatarUrl} name={comment.author} size={30} />
+            <div>
+              <strong>{comment.author}<small>{comment.time}</small></strong>
+              <span>{comment.handle}</span>
+              <p>{comment.body}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+      {error && <p className="online-case-comments-error">{error}</p>}
+      {session ? (
+        <form className="online-case-comment-form" onSubmit={submitComment}>
+          <textarea
+            required
+            maxLength={1000}
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            placeholder="写下线索、推测或需要创作者补充的内容…"
+          />
+          <button type="submit" disabled={submitting || !body.trim()}>
+            <ChatCircleIcon size={15} />
+            {submitting ? "发送中…" : "发布协助留言"}
+          </button>
+        </form>
+      ) : (
+        <button
+          className="online-case-comment-login"
+          onClick={() => onOpenAuth("signin")}
+        >
+          <SignInIcon size={15} />登录后参与调查
+        </button>
+      )}
+    </aside>
+  );
+}
+
 function CommunityHome({
   session,
   profile,
   onOpenAuth,
   onLogout,
+  onProfileChange,
 }: {
   session: Session | null;
   profile: CommunityProfile | null;
   onOpenAuth: (mode: AuthMode) => void;
   onLogout: () => void;
+  onProfileChange: (profile: CommunityProfile) => void;
 }) {
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState<"hot" | "new" | "top">("hot");
@@ -416,6 +564,10 @@ function CommunityHome({
   const [likedBoardIds, setLikedBoardIds] = useState<Set<string>>(() => new Set());
   const [commentBoard, setCommentBoard] = useState<CommunityBoard | null>(null);
   const [deletingBoardId, setDeletingBoardId] = useState("");
+  const [recentBoardIds, setRecentBoardIds] = useState<string[]>([]);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [theme, setTheme] = useState<CommunityTheme>(() => {
     const storedTheme = window.localStorage.getItem(COMMUNITY_THEME_KEY);
     return storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
@@ -442,6 +594,19 @@ function CommunityHome({
     return () => window.clearTimeout(timeout);
   }, [loadBoards]);
 
+  useEffect(() => {
+    if (!session?.user.id) {
+      const timeout = window.setTimeout(() => setRecentBoardIds([]), 0);
+      return () => window.clearTimeout(timeout);
+    }
+    const timeout = window.setTimeout(() => {
+      void listRecentBoardIds(session.user.id)
+        .then(setRecentBoardIds)
+        .catch(() => setRecentBoardIds([]));
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [session?.user.id]);
+
   const visibleBoards = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = boards.filter((board) => {
@@ -464,6 +629,13 @@ function CommunityHome({
       return b.views + b.comments * 4 - (a.views + a.comments * 4);
     });
   }, [activeGenre, activeTag, boards, search, sortMode]);
+
+  const recentBoards = useMemo(() => {
+    const byId = new Map(boards.map((board) => [board.id, board]));
+    return recentBoardIds
+      .map((boardId) => byId.get(boardId))
+      .filter((board): board is CommunityBoard => Boolean(board));
+  }, [boards, recentBoardIds]);
 
   const startCreating = () => {
     if (session) navigate("board");
@@ -510,6 +682,28 @@ function CommunityHome({
     }
   };
 
+  const changeAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !session?.user.id) return;
+
+    setUploadingAvatar(true);
+    setAvatarMessage("");
+    try {
+      const avatarUrl = await uploadProfileAvatar(session.user.id, file);
+      onProfileChange({
+        displayName: profile?.displayName || "社区侦探",
+        handle: profile?.handle || "",
+        avatarUrl,
+      });
+      setAvatarMessage("头像已更新");
+    } catch (error) {
+      setAvatarMessage(error instanceof Error ? error.message : "头像上传失败");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className={`community-page theme-${theme}`} data-community-theme={theme}>
       <div className="community-dark-veil" aria-hidden="true">
@@ -531,7 +725,7 @@ function CommunityHome({
               <i aria-hidden="true">×</i>
               <span className="community-brand-pinewood">Pinewood</span>
             </strong>
-            <small>松木镇公共案件社区 · SEMIOTIC INDEX 01</small>
+            <small>松木镇公共案件社区访问系统</small>
           </span>
         </button>
 
@@ -548,8 +742,13 @@ function CommunityHome({
         <div className="community-header-actions">
           <button onClick={startCreating}><PlusIcon size={17} />创建案件板</button>
           {session ? (
-            <button className="community-plain-login" onClick={onLogout}>
-              <UserIcon size={17} />{profile?.displayName || "我的档案"} · 退出
+            <button className="community-plain-login community-header-avatar" onClick={onLogout}>
+              <ProfileAvatar
+                url={profile?.avatarUrl}
+                name={profile?.displayName || "我的档案"}
+                size={28}
+              />
+              <b>{profile?.displayName || "我的档案"} · 退出</b>
             </button>
           ) : (
             <button className="community-plain-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={17} />登录</button>
@@ -567,14 +766,6 @@ function CommunityHome({
 
       <div className="community-layout">
         <aside className="community-left-rail">
-          <section className="community-side-panel community-recent">
-            <h2><FolderOpenIcon size={19} />最近浏览</h2>
-            <p>你打开过的公开案件会出现在这里，方便继续调查。</p>
-            {!session && (
-              <button className="community-side-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={16} />登录</button>
-            )}
-          </section>
-
           <section className="community-side-panel community-genre-panel">
             <header>
               <h2><GraphIcon size={20} weight="duotone" />案件类型</h2>
@@ -742,11 +933,31 @@ function CommunityHome({
 
         <aside className="community-right-rail">
           <section className="community-account-panel">
-            <span className="community-account-icon"><UserIcon size={34} /></span>
+            <span className="community-account-icon">
+              {session
+                ? <ProfileAvatar url={profile?.avatarUrl} name={profile?.displayName || "我的档案"} size={48} />
+                : <UserIcon size={34} />}
+            </span>
             <strong>{session ? `欢迎回来，${profile?.displayName || "侦探"}` : "建立你的侦探档案"}</strong>
             <p>{session ? "继续创作、保存并公开你的案件板。" : "登录后创建自己的案件板，并发布到公共社区。"}</p>
             {session ? (
               <>
+                <button
+                  className="community-avatar-upload"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  <UploadSimpleIcon size={16} />
+                  {uploadingAvatar ? "上传中…" : "上传头像"}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  className="visually-hidden"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(event) => void changeAvatar(event)}
+                />
+                {avatarMessage && <span className="community-avatar-message">{avatarMessage}</span>}
                 <button className="community-account-primary" onClick={() => navigate("board")}><PlusIcon size={17} />进入案件板</button>
                 <button className="community-account-secondary" onClick={onLogout}>退出登录</button>
               </>
@@ -766,6 +977,28 @@ function CommunityHome({
               <li><b>03</b><span>选择类型并发布到社区</span></li>
             </ol>
             <button onClick={startCreating}>{session ? "开始创作" : "注册后开始创作"}</button>
+          </section>
+
+          <section className="community-side-panel community-recent">
+            <h2><FolderOpenIcon size={19} />最近浏览</h2>
+            {!session ? (
+              <>
+                <p>登录后，这里会记录你最近打开的公开案件。</p>
+                <button className="community-side-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={16} />登录</button>
+              </>
+            ) : recentBoards.length > 0 ? (
+              <div className="community-recent-list">
+                {recentBoards.map((board, index) => (
+                  <button key={board.id} onClick={() => navigate("board", board.id)}>
+                    <b>{String(index + 1).padStart(2, "0")}</b>
+                    <span><strong>{board.title}</strong><small>{board.author} · {board.time}</small></span>
+                    <EyeIcon size={14} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p>打开过的公开案件会出现在这里，方便继续调查。</p>
+            )}
           </section>
         </aside>
       </div>
@@ -796,15 +1029,22 @@ export function OnlineWorkshopApp() {
   const [profile, setProfile] = useState<CommunityProfile | null>(null);
   const [publicPreview, setPublicPreview] = useState<PublicBoardPreview | null>(null);
   const [publicBoardOwnerId, setPublicBoardOwnerId] = useState("");
+  const [publicBoardTitle, setPublicBoardTitle] = useState("");
+  const [publicViewCount, setPublicViewCount] = useState(0);
+  const [publicViewers, setPublicViewers] = useState<BoardViewer[]>([]);
+  const [publicCommentCount, setPublicCommentCount] = useState(0);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardError, setBoardError] = useState("");
   const [deletingActiveBoard, setDeletingActiveBoard] = useState(false);
+  const recordedViewRef = useRef("");
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       if (nextSession) setAuthMode(null);
+      else setProfile(null);
     });
     return () => data.subscription.unsubscribe();
   }, []);
@@ -818,6 +1058,14 @@ export function OnlineWorkshopApp() {
     }, 0);
     return () => window.clearTimeout(timeout);
   }, [session?.user.id]);
+
+  useEffect(() => {
+    if (activeRoute !== "board") {
+      recordedViewRef.current = "";
+      const timeout = window.setTimeout(() => setCommentsPanelOpen(false), 0);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [activeRoute]);
 
   useEffect(() => {
     if (!window.location.hash || window.location.hash.startsWith("#/facilitator")) {
@@ -840,16 +1088,26 @@ export function OnlineWorkshopApp() {
     if (activeRoute !== "board" || !activeBoardId) return;
 
     let cancelled = false;
+    const shouldRecordView = recordedViewRef.current !== activeBoardId;
+    if (shouldRecordView) recordedViewRef.current = activeBoardId;
     const timeout = window.setTimeout(() => {
       setBoardLoading(true);
       setBoardError("");
       setPublicPreview(null);
       setPublicBoardOwnerId("");
-      void getPublicBoard(activeBoardId)
+      setPublicBoardTitle("");
+      setPublicViewers([]);
+      setPublicCommentCount(0);
+      setCommentsPanelOpen(false);
+      void getPublicBoard(activeBoardId, shouldRecordView)
         .then((record) => {
           if (!cancelled) {
             setPublicPreview(record.preview);
             setPublicBoardOwnerId(record.ownerId);
+            setPublicBoardTitle(record.title);
+            setPublicViewCount(record.viewCount);
+            setPublicViewers(record.viewers);
+            setPublicCommentCount(record.commentCount);
           }
         })
         .catch(() => {
@@ -877,8 +1135,13 @@ export function OnlineWorkshopApp() {
   }, [session]);
 
   const logout = () => {
+    setProfile(null);
     void supabase.auth.signOut();
   };
+
+  const updatePublicCommentCount = useCallback((count: number) => {
+    setPublicCommentCount(count);
+  }, []);
 
   const deleteActiveBoard = async () => {
     if (!session?.user.id || !activeBoardId || publicBoardOwnerId !== session.user.id) return;
@@ -890,6 +1153,9 @@ export function OnlineWorkshopApp() {
       await deleteOwnBoard(activeBoardId, session.user.id);
       setPublicPreview(null);
       setPublicBoardOwnerId("");
+      setPublicBoardTitle("");
+      setPublicViewers([]);
+      setCommentsPanelOpen(false);
       navigate("workshop");
     } catch {
       setBoardError("案件没有删除，请稍后重试。");
@@ -919,6 +1185,37 @@ export function OnlineWorkshopApp() {
             onPublish={handlePublish}
             onDeletePublished={handleDeletePublished}
             onRequireSignIn={() => setAuthMode("signin")}
+            headerStatusAddon={activeBoardId ? (
+              <div className="online-viewer-presence" aria-label={`浏览 ${publicViewCount} 次`}>
+                <span className="online-viewer-count"><EyeIcon size={14} />{publicViewCount}</span>
+                {publicViewers.length > 0 ? (
+                  <span className="online-viewer-stack" aria-label="最近查看过这个案件的社区用户">
+                    {publicViewers.slice(0, 5).map((viewer) => (
+                      <ProfileAvatar
+                        key={viewer.id}
+                        url={viewer.avatarUrl}
+                        name={`${viewer.displayName}${viewer.handle ? ` ${viewer.handle}` : ""}`}
+                        size={27}
+                      />
+                    ))}
+                    {publicViewers.length > 5 && <b>+{publicViewers.length - 5}</b>}
+                  </span>
+                ) : (
+                  <small>暂无登录访客</small>
+                )}
+              </div>
+            ) : undefined}
+            inspectorHeaderAddon={activeBoardId ? (
+              <button
+                className="online-inspector-comments-button"
+                onClick={() => setCommentsPanelOpen(true)}
+                title="查看协助探案的留言"
+              >
+                <ChatCircleIcon size={14} />
+                <span>协助留言</span>
+                <b>{publicCommentCount}</b>
+              </button>
+            ) : undefined}
             headerAddon={(
               <div className="online-preview-ribbon" aria-label="社区案件操作">
                 <span>COMMUNITY</span>
@@ -940,6 +1237,16 @@ export function OnlineWorkshopApp() {
               </div>
             )}
           />
+          {activeBoardId && commentsPanelOpen && (
+            <BoardCommentsPanel
+              boardId={activeBoardId}
+              boardTitle={publicBoardTitle || publicPreview?.meta.caseTitle || "公开案件板"}
+              session={session}
+              onClose={() => setCommentsPanelOpen(false)}
+              onOpenAuth={setAuthMode}
+              onCountChange={updatePublicCommentCount}
+            />
+          )}
         </div>
       );
     }
@@ -950,6 +1257,7 @@ export function OnlineWorkshopApp() {
         profile={profile}
         onOpenAuth={setAuthMode}
         onLogout={logout}
+        onProfileChange={setProfile}
       />
     );
   }

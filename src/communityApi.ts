@@ -7,11 +7,13 @@ import type {
 import { supabase } from "./supabaseClient";
 
 const CASE_ASSETS_BUCKET = "case-assets";
+const PROFILE_AVATARS_BUCKET = "profile-avatars";
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 type ProfileJoin = {
   display_name?: string;
   handle?: string | null;
+  avatar_url?: string | null;
 };
 
 type CountJoin = Array<{ count?: number }>;
@@ -39,6 +41,7 @@ export type CommunityBoard = {
   title: string;
   author: string;
   handle: string;
+  authorAvatar: string;
   description: string;
   tags: string[];
   genres: string[];
@@ -53,6 +56,7 @@ export type CommunityBoard = {
 export type CommunityProfile = {
   displayName: string;
   handle: string;
+  avatarUrl: string;
 };
 
 export type BoardComment = {
@@ -60,14 +64,26 @@ export type BoardComment = {
   body: string;
   author: string;
   handle: string;
+  avatarUrl: string;
   createdAt: string;
   time: string;
+};
+
+export type BoardViewer = {
+  id: string;
+  displayName: string;
+  handle: string;
+  avatarUrl: string;
+  lastViewedAt: string;
 };
 
 export type PublicBoardRecord = {
   preview: PublicBoardPreview;
   ownerId: string;
   title: string;
+  viewCount: number;
+  commentCount: number;
+  viewers: BoardViewer[];
 };
 
 function joinOne(value: ProfileJoin | ProfileJoin[] | null): ProfileJoin {
@@ -163,7 +179,7 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
       view_count,
       published_at,
       snapshot,
-      profiles!boards_owner_id_fkey(display_name, handle),
+      profiles!boards_owner_id_fkey(display_name, handle, avatar_url),
       comments(count),
       reactions(count)
     `)
@@ -182,6 +198,7 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
       title: row.title,
       author: profile.display_name || "匿名侦探",
       handle: profile.handle ? `@${profile.handle}` : "",
+      authorAvatar: profile.avatar_url || "",
       description: row.description || "一份等待调查的公开案件板。",
       tags: row.tags?.length ? row.tags : [row.genre],
       genres: [row.genre],
@@ -195,21 +212,65 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
   });
 }
 
-export async function getPublicBoard(boardId: string): Promise<PublicBoardRecord> {
+export async function getPublicBoard(
+  boardId: string,
+  recordView = true,
+): Promise<PublicBoardRecord> {
   const { data, error } = await supabase
     .from("boards")
-    .select("snapshot, owner_id, title")
+    .select("snapshot, owner_id, title, view_count, comments(count)")
     .eq("id", boardId)
     .eq("is_public", true)
     .single();
   if (error) throw error;
 
-  void supabase.rpc("increment_board_views", { target_board_id: boardId });
+  let viewCount = Number(data.view_count ?? 0);
+  if (recordView) {
+    const { data: nextViewCount, error: viewError } = await supabase
+      .rpc("record_board_view", { target_board_id: boardId });
+    if (viewError) throw viewError;
+    viewCount = Number(nextViewCount ?? viewCount + 1);
+  }
+
   return {
     preview: data.snapshot as PublicBoardPreview,
     ownerId: data.owner_id,
     title: data.title,
+    viewCount,
+    commentCount: countJoin(data.comments as CountJoin | null),
+    viewers: await listBoardViewers(boardId),
   };
+}
+
+export async function listBoardViewers(boardId: string): Promise<BoardViewer[]> {
+  const { data, error } = await supabase
+    .rpc("get_board_viewers", { target_board_id: boardId });
+  if (error) throw error;
+
+  return ((data ?? []) as unknown as Array<{
+    viewer_id: string;
+    display_name: string;
+    handle: string | null;
+    avatar_url: string | null;
+    last_viewed_at: string;
+  }>).map((row) => ({
+      id: row.viewer_id,
+      displayName: row.display_name || "社区侦探",
+      handle: row.handle ? `@${row.handle}` : "",
+      avatarUrl: row.avatar_url || "",
+      lastViewedAt: row.last_viewed_at,
+  }));
+}
+
+export async function listRecentBoardIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("board_views")
+    .select("board_id")
+    .eq("viewer_id", userId)
+    .order("last_viewed_at", { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data ?? []).map((row) => row.board_id);
 }
 
 export async function deleteOwnBoard(
@@ -278,7 +339,7 @@ async function deleteOwnedBoardRecord(
 export async function getProfile(userId: string): Promise<CommunityProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("display_name, handle")
+    .select("display_name, handle, avatar_url")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -286,7 +347,60 @@ export async function getProfile(userId: string): Promise<CommunityProfile | nul
   return {
     displayName: data.display_name,
     handle: data.handle ? `@${data.handle}` : "",
+    avatarUrl: data.avatar_url || "",
   };
+}
+
+export async function uploadProfileAvatar(
+  userId: string,
+  file: File,
+): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("请选择图片文件");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("头像图片不能超过 2MB");
+  }
+
+  const extension = extensionForMimeType(file.type);
+  if (extension === "img") {
+    throw new Error("头像仅支持 JPG、PNG、WEBP 或 GIF");
+  }
+
+  const folder = userId;
+  const { data: existing } = await supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .list(folder, { limit: 20 });
+  const oldPaths = (existing ?? [])
+    .filter((asset) => asset.name !== ".emptyFolderPlaceholder")
+    .map((asset) => `${folder}/${asset.name}`);
+
+  const path = `${userId}/avatar-${Date.now()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: false,
+    });
+  if (uploadError) throw uploadError;
+
+  const { data: publicUrl } = supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .getPublicUrl(path);
+  const avatarUrl = publicUrl.publicUrl;
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", userId);
+  if (profileError) throw profileError;
+
+  if (oldPaths.length) {
+    await supabase.storage.from(PROFILE_AVATARS_BUCKET).remove(oldPaths);
+  }
+
+  return avatarUrl;
 }
 
 export async function toggleBoardLike(
@@ -327,7 +441,7 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
       id,
       body,
       created_at,
-      profiles!comments_author_id_fkey(display_name, handle)
+      profiles!comments_author_id_fkey(display_name, handle, avatar_url)
     `)
     .eq("board_id", boardId)
     .order("created_at", { ascending: true });
@@ -345,6 +459,7 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
       body: row.body,
       author: profile.display_name || "匿名侦探",
       handle: profile.handle ? `@${profile.handle}` : "",
+      avatarUrl: profile.avatar_url || "",
       createdAt: row.created_at,
       time: relativeTime(row.created_at),
     };

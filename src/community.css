@@ -369,6 +369,66 @@
   line-height: 1.55;
 }
 
+.community-recent-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.community-recent-list button {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  color: var(--community-text);
+  background: var(--community-card);
+  border: 1px solid var(--community-border-soft);
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.community-recent-list button:hover {
+  border-color: var(--community-red);
+}
+
+.community-recent-list button > b {
+  color: var(--community-red);
+  font-family: "Wire One", "Arial Narrow", sans-serif;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.community-recent-list button > span,
+.community-recent-list strong,
+.community-recent-list small {
+  min-width: 0;
+  display: block;
+}
+
+.community-recent-list strong,
+.community-recent-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.community-recent-list strong {
+  font-size: 10px;
+}
+
+.community-recent-list small {
+  margin-top: 4px;
+  color: var(--community-muted);
+  font-size: 7px;
+}
+
+.community-recent-list .pinewood-ui-icon {
+  color: var(--community-muted);
+}
+
 .community-side-login {
   width: 100%;
   height: 34px;
@@ -1016,6 +1076,38 @@
   border: 1px solid #313131;
 }
 
+.community-avatar-upload {
+  width: 100%;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 8px;
+  color: var(--community-red);
+  background: var(--community-card);
+  border: 2px solid var(--community-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 680;
+}
+
+.community-avatar-upload:hover {
+  border-color: var(--community-red);
+}
+
+.community-avatar-upload:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.community-avatar-message {
+  margin: -2px 0 8px;
+  color: var(--community-muted);
+  font-size: 8px;
+}
+
 .community-guide {
   padding: 16px;
 }
@@ -1338,6 +1430,9 @@
 }
 
 .community-comment-list article {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 9px;
   padding: 11px 12px;
   background: var(--community-card);
   border: 1px solid var(--community-border);
