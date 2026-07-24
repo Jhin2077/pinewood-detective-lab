@@ -81,8 +81,25 @@ function authErrorMessage(message: string): string {
   const normalized = message.toLowerCase();
   if (normalized.includes("invalid login credentials")) return "邮箱或密码不正确。";
   if (normalized.includes("user already registered")) return "这个邮箱已经注册，请直接登录。";
+  if (normalized.includes("email address not authorized")) {
+    return "当前邮件服务无法向这个邮箱发送验证邮件，请稍后再试。";
+  }
+  if (
+    normalized.includes("rate limit")
+    || normalized.includes("too many requests")
+    || normalized.includes("over_request_rate_limit")
+  ) {
+    return "注册请求过多，请稍后再试。";
+  }
+  if (normalized.includes("signup is disabled")) return "注册功能暂时关闭，请稍后再试。";
   if (normalized.includes("password")) return "密码至少需要 6 位字符。";
-  if (normalized.includes("email")) return "请填写有效的邮箱地址。";
+  if (
+    normalized.includes("invalid email")
+    || normalized.includes("email address is invalid")
+    || normalized.includes("unable to validate email")
+  ) {
+    return "请填写有效的邮箱地址。";
+  }
   return "操作没有完成，请稍后重试。";
 }
 
