@@ -12,6 +12,7 @@ import {
   PlusIcon,
   SignInIcon,
   SunIcon,
+  TrashIcon,
   TrendUpIcon,
   UserIcon,
   UserPlusIcon,
@@ -33,6 +34,8 @@ import {
   type BoardComment,
   type CommunityBoard,
   type CommunityProfile,
+  deleteOwnBoard,
+  deleteOwnBoardByClientId,
   getProfile,
   getPublicBoard,
   listBoardComments,
@@ -394,6 +397,7 @@ function CommunityHome({
   const [boardError, setBoardError] = useState("");
   const [likedBoardIds, setLikedBoardIds] = useState<Set<string>>(() => new Set());
   const [commentBoard, setCommentBoard] = useState<CommunityBoard | null>(null);
+  const [deletingBoardId, setDeletingBoardId] = useState("");
   const [theme, setTheme] = useState<CommunityTheme>(() => {
     const storedTheme = window.localStorage.getItem(COMMUNITY_THEME_KEY);
     return storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
@@ -468,6 +472,23 @@ function CommunityHome({
       )));
     } catch {
       setBoardError("点赞没有完成，请稍后再试。");
+    }
+  };
+
+  const deleteBoard = async (board: CommunityBoard) => {
+    if (!session?.user.id || board.ownerId !== session.user.id) return;
+    if (!window.confirm(`永久删除“${board.title}”？评论、点赞和案件图片也会一并删除，此操作无法撤销。`)) return;
+
+    setDeletingBoardId(board.id);
+    setBoardError("");
+    try {
+      await deleteOwnBoard(board.id, session.user.id);
+      setBoards((current) => current.filter((item) => item.id !== board.id));
+      setCommentBoard((current) => current?.id === board.id ? null : current);
+    } catch {
+      setBoardError("案件没有删除，请稍后重试。");
+    } finally {
+      setDeletingBoardId("");
     }
   };
 
@@ -653,6 +674,21 @@ function CommunityHome({
                       <ChatCircleIcon size={15} />{board.comments}
                     </button>
                     <i><EyeIcon size={15} />{board.views}</i>
+                    {session?.user.id === board.ownerId && (
+                      <button
+                        className="community-board-delete"
+                        disabled={deletingBoardId === board.id}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void deleteBoard(board);
+                        }}
+                        onKeyDown={(event) => event.stopPropagation()}
+                        aria-label={`删除 ${board.title}`}
+                      >
+                        <TrashIcon size={14} />
+                        {deletingBoardId === board.id ? "删除中…" : "删除案件"}
+                      </button>
+                    )}
                   </span>
                 </span>
                 {board.image ? (
@@ -745,8 +781,10 @@ export function OnlineWorkshopApp() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<CommunityProfile | null>(null);
   const [publicPreview, setPublicPreview] = useState<PublicBoardPreview | null>(null);
+  const [publicBoardOwnerId, setPublicBoardOwnerId] = useState("");
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardError, setBoardError] = useState("");
+  const [deletingActiveBoard, setDeletingActiveBoard] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -791,9 +829,14 @@ export function OnlineWorkshopApp() {
     const timeout = window.setTimeout(() => {
       setBoardLoading(true);
       setBoardError("");
+      setPublicPreview(null);
+      setPublicBoardOwnerId("");
       void getPublicBoard(activeBoardId)
-        .then((preview) => {
-          if (!cancelled) setPublicPreview(preview);
+        .then((record) => {
+          if (!cancelled) {
+            setPublicPreview(record.preview);
+            setPublicBoardOwnerId(record.ownerId);
+          }
         })
         .catch(() => {
           if (!cancelled) setBoardError("这个案件板不存在，或尚未公开。");
@@ -814,8 +857,31 @@ export function OnlineWorkshopApp() {
     return publishBoard(payload, session.user.id);
   }, [session]);
 
+  const handleDeletePublished = useCallback(async (clientId: string) => {
+    if (!session?.user.id) throw new Error("请先登录，再删除公开案件板");
+    await deleteOwnBoardByClientId(clientId, session.user.id);
+  }, [session]);
+
   const logout = () => {
     void supabase.auth.signOut();
+  };
+
+  const deleteActiveBoard = async () => {
+    if (!session?.user.id || !activeBoardId || publicBoardOwnerId !== session.user.id) return;
+    const title = publicPreview?.meta.caseTitle || "这个案件板";
+    if (!window.confirm(`永久删除“${title}”？评论、点赞和案件图片也会一并删除，此操作无法撤销。`)) return;
+
+    setDeletingActiveBoard(true);
+    try {
+      await deleteOwnBoard(activeBoardId, session.user.id);
+      setPublicPreview(null);
+      setPublicBoardOwnerId("");
+      navigate("workshop");
+    } catch {
+      setBoardError("案件没有删除，请稍后重试。");
+    } finally {
+      setDeletingActiveBoard(false);
+    }
   };
 
   let page;
@@ -837,10 +903,21 @@ export function OnlineWorkshopApp() {
             publicPreview={activeBoardId ? publicPreview ?? undefined : undefined}
             canPublish={Boolean(session)}
             onPublish={handlePublish}
+            onDeletePublished={handleDeletePublished}
             onRequireSignIn={() => setAuthMode("signin")}
           />
           <div className="online-preview-ribbon">
             <span>CASE BOARD · COMMUNITY WORKSPACE</span>
+            {activeBoardId && session?.user.id === publicBoardOwnerId && (
+              <button
+                className="online-delete-published"
+                disabled={deletingActiveBoard}
+                onClick={() => void deleteActiveBoard()}
+              >
+                <TrashIcon size={14} />
+                {deletingActiveBoard ? "删除中…" : "删除我的案件"}
+              </button>
+            )}
             <button onClick={() => navigate("workshop")}>← 返回公共案件板</button>
           </div>
         </div>

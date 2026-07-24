@@ -1244,12 +1244,32 @@
 
 .online-preview-ribbon button {
   height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 0 11px;
   color: #c8bea7;
   background: #282720;
   border: 1px solid #403d34;
   font-size: 8px;
   cursor: pointer;
+}
+
+.online-preview-ribbon .online-delete-published {
+  color: #ffc1b8;
+  background: #491915;
+  border-color: #7f2c25;
+}
+
+.online-preview-ribbon .online-delete-published:hover {
+  color: #fff;
+  background: #9e211a;
+  border-color: #d94236;
+}
+
+.online-preview-ribbon .online-delete-published:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 @media (max-width: 1180px) {

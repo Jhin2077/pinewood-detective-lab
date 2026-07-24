@@ -700,6 +700,7 @@
 }
 
 .community-board-stats {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 17px;
@@ -729,6 +730,28 @@
 .community-board-stats button:hover,
 .community-board-stats button.is-active {
   color: var(--community-red);
+}
+
+.community-board-stats .community-board-delete {
+  min-height: 27px;
+  margin-left: auto;
+  padding: 0 9px;
+  color: #a21c18;
+  background: rgba(169, 23, 18, 0.06);
+  border: 1px solid rgba(169, 23, 18, 0.36);
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+.community-board-stats .community-board-delete:hover {
+  color: #fffdf2;
+  background: var(--community-red);
+  border-color: var(--community-red);
+}
+
+.community-board-stats .community-board-delete:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 .community-board-thumb {

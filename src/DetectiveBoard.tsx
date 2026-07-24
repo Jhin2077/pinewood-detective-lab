@@ -87,6 +87,7 @@ type BoardSnapshot = {
 
 type BoardDocument = {
   id: string;
+  publicBoardId?: string;
   meta: BoardMeta;
   cards: EvidenceCard[];
   links: EvidenceLink[];
@@ -203,11 +204,13 @@ export function DetectiveBoard({
   publicPreview,
   canPublish = false,
   onPublish,
+  onDeletePublished,
   onRequireSignIn,
 }: {
   publicPreview?: PublicBoardPreview;
   canPublish?: boolean;
   onPublish?: (payload: BoardPublishPayload) => Promise<string>;
+  onDeletePublished?: (clientId: string) => Promise<void>;
   onRequireSignIn?: () => void;
 } = {}) {
   const [boards, setBoards] = useState<BoardDocument[]>([INITIAL_BOARD]);
@@ -226,6 +229,7 @@ export function DetectiveBoard({
   const [presentation, setPresentation] = useState(false);
   const [sharedView, setSharedView] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [deletingCurrentBoard, setDeletingCurrentBoard] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [mounted, setMounted] = useState(false);
 
@@ -430,7 +434,17 @@ export function DetectiveBoard({
     setContextMenu(null);
     setSelectedId(card.id);
     setInspectorMode("card");
-    if (sharedView) return;
+    if (sharedView) {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+      dragRef.current = {
+        id: card.id,
+        pointerX: event.clientX,
+        pointerY: event.clientY,
+        cardX: card.x,
+        cardY: card.y,
+      };
+      return;
+    }
     if (activeTool === "connect") {
       if (!connectionStart) {
         setConnectionStart(card.id);
@@ -471,7 +485,9 @@ export function DetectiveBoard({
     if (!drag) return;
     const nextX = drag.cardX + (event.clientX - drag.pointerX) / scale;
     const nextY = drag.cardY + (event.clientY - drag.pointerY) / scale;
-    updateCard(drag.id, { x: nextX, y: nextY });
+    setCards((current) => current.map((card) => (
+      card.id === drag.id ? { ...card, x: nextX, y: nextY } : card
+    )));
   };
 
   const onCardPointerUp = () => {
@@ -914,6 +930,7 @@ export function DetectiveBoard({
           links,
           meta,
         });
+        updateActiveBoard((board) => ({ ...board, publicBoardId }));
         showToast("案件板已发布到社区");
         window.history.replaceState(null, "", `#/board?id=${encodeURIComponent(publicBoardId)}`);
       } catch (error) {
@@ -1039,18 +1056,44 @@ export function DetectiveBoard({
     setScale(0.82);
   };
 
-  const deleteCurrentBoard = () => {
-    if (sharedView || boards.length <= 1) return;
-    if (!window.confirm(`删除档案板“${meta.caseTitle}”？该操作无法撤销。`)) return;
-    const nextBoards = boards.filter((board) => board.id !== activeBoardId);
-    const nextBoard = nextBoards[Math.min(activeBoardIndex, nextBoards.length - 1)];
-    setBoards(nextBoards);
-    setActiveBoardId(nextBoard.id);
-    setSelectedId("");
-    setConnectionStart(null);
-    setContextMenu(null);
-    setViewMode("board");
-    showToast("当前档案板已删除，其余档案板未受影响");
+  const deleteCurrentBoard = async () => {
+    if (sharedView || deletingCurrentBoard) return;
+    if (activeBoard.publicBoardId && !canPublish) {
+      showToast("请先登录，再删除已经公开的案件板");
+      onRequireSignIn?.();
+      return;
+    }
+
+    const warning = activeBoard.publicBoardId
+      ? `永久删除“${meta.caseTitle}”？公共档案界中的版本也会同步消失，此操作无法撤销。`
+      : `删除档案板“${meta.caseTitle}”？如果它已经发布，公共版本也会同步删除。此操作无法撤销。`;
+    if (!window.confirm(warning)) return;
+
+    setDeletingCurrentBoard(true);
+    try {
+      if (canPublish && onDeletePublished) {
+        await onDeletePublished(activeBoard.id);
+      }
+
+      const remainingBoards = boards.filter((board) => board.id !== activeBoardId);
+      const nextBoards = remainingBoards.length > 0
+        ? remainingBoards
+        : [createBoardDocument(blankMeta)];
+      const nextBoard = nextBoards[Math.min(activeBoardIndex, nextBoards.length - 1)];
+      setBoards(nextBoards);
+      setActiveBoardId(nextBoard.id);
+      setSelectedId("");
+      setConnectionStart(null);
+      setContextMenu(null);
+      setViewMode("board");
+      showToast(activeBoard.publicBoardId
+        ? "本地档案和公共版本已一并删除"
+        : "当前档案板已删除");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "案件没有删除，请稍后重试");
+    } finally {
+      setDeletingCurrentBoard(false);
+    }
   };
 
   const renderCard = (card: EvidenceCard, layerIndex: number) => {
@@ -1161,14 +1204,14 @@ export function DetectiveBoard({
         </div>
         <div className="top-actions">
           {sharedView ? (
-            <span className="readonly-badge"><EyeIcon size={15} />只读展示</span>
+            <span className="readonly-badge"><EyeIcon size={15} />只读调查 · 可拖动线索</span>
           ) : (
             <button className="save-status" onClick={manualSave} title="保存到当前浏览器的 Workshop 草稿">
               {saveState === "saved" ? <CheckCircleIcon size={16} weight="fill" /> : <ArrowsClockwiseIcon size={16} className="spin" />}
               {saveState === "saved" ? "已保存" : "保存中"}
             </button>
           )}
-          <span className="local-creation-badge"><FloppyDiskIcon size={15} />本地草稿</span>
+          {!sharedView && <span className="local-creation-badge"><FloppyDiskIcon size={15} />本地草稿</span>}
           <button className="presentation-button" onClick={togglePresentation}><PresentationIcon size={17} weight="bold" /><span>展示线索板</span></button>
           {!sharedView && (
             <button
@@ -1418,7 +1461,14 @@ export function DetectiveBoard({
             {!sharedView && (
               <div className="current-board-actions">
                 <button onClick={startBlankBoard}><PlusIcon size={14} />新建档案板</button>
-                {boards.length > 1 && <button className="danger" onClick={deleteCurrentBoard}><TrashIcon size={14} />删除当前板</button>}
+                <button
+                  className="danger"
+                  disabled={deletingCurrentBoard}
+                  onClick={() => void deleteCurrentBoard()}
+                >
+                  <TrashIcon size={14} />
+                  {deletingCurrentBoard ? "删除中…" : "删除当前板"}
+                </button>
               </div>
             )}
           </section>

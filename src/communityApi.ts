@@ -18,6 +18,8 @@ type CountJoin = Array<{ count?: number }>;
 
 type PublicBoardRow = {
   id: string;
+  owner_id: string;
+  client_id: string;
   title: string;
   description: string;
   genre: string;
@@ -33,6 +35,8 @@ type PublicBoardRow = {
 
 export type CommunityBoard = {
   id: string;
+  ownerId: string;
+  clientId: string;
   title: string;
   author: string;
   handle: string;
@@ -59,6 +63,12 @@ export type BoardComment = {
   handle: string;
   createdAt: string;
   time: string;
+};
+
+export type PublicBoardRecord = {
+  preview: PublicBoardPreview;
+  ownerId: string;
+  title: string;
 };
 
 function joinOne(value: ProfileJoin | ProfileJoin[] | null): ProfileJoin {
@@ -145,6 +155,8 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
     .from("boards")
     .select(`
       id,
+      owner_id,
+      client_id,
       title,
       description,
       genre,
@@ -167,6 +179,8 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
     const publishedAt = row.published_at ?? new Date().toISOString();
     return {
       id: row.id,
+      ownerId: row.owner_id,
+      clientId: row.client_id,
       title: row.title,
       author: profile.display_name || "匿名侦探",
       handle: profile.handle ? `@${profile.handle}` : "",
@@ -183,17 +197,84 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
   });
 }
 
-export async function getPublicBoard(boardId: string): Promise<PublicBoardPreview> {
+export async function getPublicBoard(boardId: string): Promise<PublicBoardRecord> {
   const { data, error } = await supabase
     .from("boards")
-    .select("snapshot")
+    .select("snapshot, owner_id, title")
     .eq("id", boardId)
     .eq("is_public", true)
     .single();
   if (error) throw error;
 
   void supabase.rpc("increment_board_views", { target_board_id: boardId });
-  return data.snapshot as PublicBoardPreview;
+  return {
+    preview: data.snapshot as PublicBoardPreview,
+    ownerId: data.owner_id,
+    title: data.title,
+  };
+}
+
+export async function deleteOwnBoard(
+  boardId: string,
+  userId: string,
+): Promise<void> {
+  const { data: board, error: findError } = await supabase
+    .from("boards")
+    .select("id, owner_id, client_id")
+    .eq("id", boardId)
+    .maybeSingle();
+  if (findError) throw findError;
+  if (!board) return;
+  if (board.owner_id !== userId) {
+    throw new Error("你只能删除自己创建的案件板");
+  }
+
+  await deleteOwnedBoardRecord(board, userId);
+}
+
+export async function deleteOwnBoardByClientId(
+  clientId: string,
+  userId: string,
+): Promise<void> {
+  const { data: board, error: findError } = await supabase
+    .from("boards")
+    .select("id, owner_id, client_id")
+    .eq("owner_id", userId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+  if (findError) throw findError;
+  if (!board) return;
+
+  await deleteOwnedBoardRecord(board, userId);
+}
+
+async function deleteOwnedBoardRecord(
+  board: { id: string; owner_id: string; client_id: string },
+  userId: string,
+): Promise<void> {
+  const { data: deleted, error: deleteError } = await supabase
+    .from("boards")
+    .delete()
+    .eq("id", board.id)
+    .eq("owner_id", userId)
+    .select("id")
+    .maybeSingle();
+  if (deleteError) throw deleteError;
+  if (!deleted) throw new Error("案件板没有删除，请刷新后重试");
+
+  const folder = `${userId}/${safePathPart(board.client_id)}`;
+  const { data: assets, error: listError } = await supabase.storage
+    .from(CASE_ASSETS_BUCKET)
+    .list(folder, { limit: 1000 });
+
+  if (!listError && assets?.length) {
+    const paths = assets
+      .filter((asset) => asset.name !== ".emptyFolderPlaceholder")
+      .map((asset) => `${folder}/${asset.name}`);
+    if (paths.length) {
+      await supabase.storage.from(CASE_ASSETS_BUCKET).remove(paths);
+    }
+  }
 }
 
 export async function getProfile(userId: string): Promise<CommunityProfile | null> {
