@@ -145,16 +145,23 @@ function AuthDialog({
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const isSignup = activeMode === "signup";
-  const registrationReady = ageConfirmed && rulesAccepted;
+  const passwordsMatch = password.length >= 6 && password === confirmPassword;
+  const registrationReady = ageConfirmed && rulesAccepted && passwordsMatch;
 
   const switchMode = (nextMode: AuthMode) => {
     setActiveMode(nextMode);
+    setConfirmPassword("");
+    setPasswordVisible(false);
+    setConfirmPasswordVisible(false);
     setMessage("");
     setIsError(false);
   };
@@ -167,8 +174,14 @@ function AuthDialog({
 
     try {
       if (isSignup) {
+        if (password !== confirmPassword) {
+          setMessage("两次输入的密码不一致，请重新确认。");
+          setIsError(true);
+          return;
+        }
+
         if (!registrationReady) {
-          setMessage("请先确认年龄并接受社区规则。");
+          setMessage("请确认两次密码一致、年龄符合要求，并接受社区规则。");
           setIsError(true);
           return;
         }
@@ -254,16 +267,64 @@ function AuthDialog({
           </label>
           <label>
             <span>密码</span>
-            <input
-              required
-              type="password"
-              minLength={6}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="至少 6 位字符"
-              autoComplete={isSignup ? "new-password" : "current-password"}
-            />
+            <div className="community-password-field">
+              <input
+                required
+                type={passwordVisible ? "text" : "password"}
+                minLength={6}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="至少 6 位字符"
+                autoComplete={isSignup ? "new-password" : "current-password"}
+              />
+              <button
+                type="button"
+                className="community-password-toggle"
+                aria-label={passwordVisible ? "隐藏密码" : "显示密码"}
+                aria-pressed={passwordVisible}
+                onClick={() => setPasswordVisible((visible) => !visible)}
+              >
+                <EyeIcon size={14} />
+                {passwordVisible ? "隐藏" : "显示"}
+              </button>
+            </div>
           </label>
+          {isSignup && (
+            <label>
+              <span>再次输入密码</span>
+              <div className="community-password-field">
+                <input
+                  required
+                  type={confirmPasswordVisible ? "text" : "password"}
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="请再次输入密码"
+                  autoComplete="new-password"
+                  aria-describedby={confirmPassword ? "community-password-match" : undefined}
+                />
+                <button
+                  type="button"
+                  className="community-password-toggle"
+                  aria-label={confirmPasswordVisible ? "隐藏确认密码" : "显示确认密码"}
+                  aria-pressed={confirmPasswordVisible}
+                  onClick={() => setConfirmPasswordVisible((visible) => !visible)}
+                >
+                  <EyeIcon size={14} />
+                  {confirmPasswordVisible ? "隐藏" : "显示"}
+                </button>
+              </div>
+              {confirmPassword && (
+                <small
+                  id="community-password-match"
+                  className={`community-password-match ${passwordsMatch ? "is-match" : "is-mismatch"}`}
+                  role="status"
+                >
+                  {passwordsMatch ? "两次密码一致" : "两次密码不一致"}
+                </small>
+              )}
+            </label>
+          )}
           {isSignup && (
             <div className="community-registration-gates">
               <label className="community-consent-row">
@@ -292,9 +353,11 @@ function AuthDialog({
                   <small>条款版本：{COMMUNITY_TERMS_VERSION}</small>
                 </div>
               </details>
-              {!registrationReady && (
+              {!ageConfirmed || !rulesAccepted ? (
                 <p className="community-registration-hint">确认年龄并接受规则后，才能完成注册。</p>
-              )}
+              ) : !passwordsMatch ? (
+                <p className="community-registration-hint">请确认两次输入的密码一致。</p>
+              ) : null}
             </div>
           )}
           {message && (
