@@ -208,12 +208,18 @@
 }
 
 .community-header-actions > button:first-child {
+  min-width: 112px;
+  flex: 0 0 auto;
   color: #fff;
   background: var(--community-red);
   border-color: var(--community-red);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .community-header-actions .community-header-avatar {
+  min-width: 0;
+  max-width: 148px;
   padding: 0 10px 0 4px;
 }
 
@@ -224,7 +230,10 @@
 }
 
 .community-header-avatar b {
+  overflow: hidden;
   font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .community-layout {
@@ -2278,6 +2287,10 @@
 .community-mobile-account-toggle,
 .community-mobile-genre-filter,
 .community-mobile-account-backdrop {
+  display: none;
+}
+
+.community-header-actions > .community-mobile-account-toggle {
   display: none;
 }
 
