@@ -1298,7 +1298,7 @@ export function DetectiveBoard({
           </span>
           <span>
             <strong>建议横屏浏览案件板</strong>
-            <small>旋转手机后，线索画布和操作区域会显示得更完整。</small>
+            <small>竖屏可从底部打开“档案抽屉”；旋转横屏可获得更宽的线索画布。</small>
           </span>
           <button
             onClick={() => {
@@ -1489,6 +1489,15 @@ export function DetectiveBoard({
           )}
         </div>
 
+        {viewMode !== "board" && (
+          <div className={`mobile-view-heading ${portraitHintOpen ? "is-below-orientation-hint" : ""}`} aria-live="polite">
+            {viewMode === "timeline" ? <ClockIcon size={18} weight="bold" /> : <GraphIcon size={18} weight="bold" />}
+            <span>
+              <small>{viewMode === "timeline" ? "CASE CHRONOLOGY" : "RELATIONSHIP MAP"}</small>
+              <strong>{viewMode === "timeline" ? "案件时间线" : "关系图谱"}</strong>
+            </span>
+          </div>
+        )}
         {connectionStart && <div className="connection-hint"><LinkSimpleIcon size={16} weight="bold" />再点一张卡片完成连线</div>}
         {viewMode === "board" && <div className="canvas-mode-badge"><ArrowsOutIcon size={13} />无限画布 · 抓手或鼠标中键平移</div>}
         <div className="zoom-control">
@@ -1763,6 +1772,14 @@ export function DetectiveBoard({
       <footer className="view-switcher">
         <button className={viewMode === "board" ? "active" : ""} onClick={() => setViewMode("board")}><PushPinIcon size={17} weight="fill" /><span>证据墙</span></button>
         <button className={viewMode === "timeline" ? "active" : ""} onClick={() => setViewMode("timeline")}><ClockIcon size={17} /><span>案件时间线</span></button>
+        <button
+          className={`mobile-footer-inspector-button ${mobileInspectorOpen ? "active" : ""}`}
+          onClick={() => setMobileInspectorOpen(true)}
+          aria-label="打开档案抽屉"
+        >
+          <FileTextIcon size={17} weight={mobileInspectorOpen ? "fill" : "regular"} />
+          <span>档案抽屉</span>
+        </button>
         <div className={`footer-timeline ${cards.length === 0 ? "is-empty" : ""} ${chronologyCards.length < 2 ? "is-sparse" : ""}`} aria-label="案件时间线摘要">
           {chronologyCards.map((card) => (
             <button key={card.id} className={card.id === selectedId ? "active" : ""} onClick={() => setSelectedId(card.id)} title={`${card.date} · ${card.title}`}>

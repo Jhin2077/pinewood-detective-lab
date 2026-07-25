@@ -1974,8 +1974,8 @@ textarea:focus-visible {
   inset: 0;
   z-index: 8;
   overflow: hidden;
-  color: #2c241b;
-  background: rgba(180, 133, 79, 0.07);
+  color: #fff4df;
+  background: rgba(45, 26, 13, 0.1);
 }
 
 .view-empty-message {
@@ -1984,9 +1984,10 @@ textarea:focus-visible {
   top: 52%;
   width: 360px;
   padding: 16px 18px;
-  color: #725c43;
-  background: rgba(231, 215, 182, 0.72);
-  border: 1px solid rgba(85, 56, 32, 0.2);
+  color: #fff5e3;
+  background: rgba(24, 21, 17, 0.84);
+  border: 1px solid rgba(244, 224, 185, 0.28);
+  box-shadow: 0 10px 28px rgba(27, 13, 5, 0.3);
   font-family: var(--display-font);
   font-size: 12px;
   text-align: center;
@@ -2000,11 +2001,17 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #392a1e;
+  padding: 10px 13px;
+  color: #fff8ea;
+  background: rgba(21, 19, 16, 0.78);
+  border: 1px solid rgba(244, 224, 185, 0.24);
+  border-radius: 4px;
+  box-shadow: 0 8px 22px rgba(25, 12, 5, 0.28);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .view-heading span {
-  color: rgba(57, 42, 30, 0.64);
+  color: rgba(255, 244, 222, 0.72);
 }
 
 .view-heading h2 {
@@ -2032,7 +2039,7 @@ textarea:focus-visible {
   flex-direction: column;
   align-items: flex-start;
   padding: 22px 0 0;
-  color: #4f3928;
+  color: #fff7e7;
   text-align: left;
   background: transparent;
   border: 0;
@@ -2063,7 +2070,7 @@ textarea:focus-visible {
 }
 
 .timeline-event time {
-  color: #8b2d2f;
+  color: #ffd477;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 9px;
   font-weight: 700;
@@ -2073,16 +2080,17 @@ textarea:focus-visible {
   margin-top: 5px;
   font-family: var(--display-font);
   font-size: 12px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.86);
 }
 
 .timeline-event small {
   margin-top: 3px;
-  color: #795f45;
+  color: #f3e1c1;
   font-size: 8px;
 }
 
 .timeline-event.active strong {
-  color: #a02026;
+  color: #ffdf9a;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -2491,15 +2499,22 @@ textarea:focus-visible {
 }
 
 .mobile-inspector-button,
+.mobile-footer-inspector-button,
 .mobile-inspector-backdrop,
 .mobile-inspector-close,
-.mobile-orientation-hint {
+.mobile-orientation-hint,
+.mobile-view-heading {
+  display: none;
+}
+
+.tool-rail .mobile-inspector-button,
+.view-switcher .mobile-footer-inspector-button {
   display: none;
 }
 
 @media (max-width: 880px) {
-  .mobile-inspector-button {
-    display: flex;
+  .view-switcher .mobile-footer-inspector-button {
+    display: inline-flex;
   }
 
   .mobile-inspector-backdrop {
@@ -2518,7 +2533,7 @@ textarea:focus-visible {
     z-index: 92;
     inset: auto 0 0;
     width: 100%;
-    height: min(78dvh, 660px);
+    height: min(84dvh, 720px);
     display: flex;
     visibility: hidden;
     padding-bottom: env(safe-area-inset-bottom);
@@ -2539,11 +2554,55 @@ textarea:focus-visible {
 
   .inspector-header {
     min-height: 58px;
+    position: sticky;
+    z-index: 4;
+    top: 0;
     border-radius: 16px 16px 0 0;
   }
 
   .mobile-inspector-close {
     display: grid;
+  }
+
+  .mobile-view-heading {
+    position: absolute;
+    z-index: 46;
+    top: 12px;
+    left: 12px;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    color: #fff8ea;
+    background: rgba(19, 18, 16, 0.9);
+    border: 1px solid rgba(244, 224, 185, 0.28);
+    border-radius: 6px;
+    box-shadow: 0 8px 22px rgba(23, 11, 5, 0.34);
+    pointer-events: none;
+  }
+
+  .mobile-view-heading > span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .mobile-view-heading small {
+    color: #b9aa91;
+    font-size: 7px;
+    letter-spacing: 0.14em;
+  }
+
+  .mobile-view-heading strong {
+    color: #fff;
+    font-family: var(--display-font);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .timeline-view .view-heading,
+  .graph-view .view-heading {
+    display: none;
   }
 }
 
@@ -2636,6 +2695,10 @@ textarea:focus-visible {
     -webkit-overflow-scrolling: touch;
   }
 
+  .tool-rail .mobile-inspector-button {
+    display: none;
+  }
+
   .tool-rail::-webkit-scrollbar {
     display: none;
   }
@@ -2672,16 +2735,18 @@ textarea:focus-visible {
   .view-switcher {
     inset: auto 0 0;
     height: var(--mobile-footer-height);
-    justify-content: center;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: 4px;
     padding: 0 8px env(safe-area-inset-bottom);
   }
 
   .view-switcher button {
-    width: auto;
-    min-width: 108px;
+    width: 100%;
+    min-width: 0;
     justify-content: center;
-    padding: 0 10px;
+    padding: 0 6px;
   }
 
   .view-switcher button span {
@@ -2692,6 +2757,21 @@ textarea:focus-visible {
     width: auto;
     max-width: 92px;
     padding: 0 8px;
+  }
+
+  .view-switcher .new-board-button {
+    display: none;
+  }
+
+  .view-switcher .mobile-footer-inspector-button {
+    color: #c9bfae;
+    border-left-color: rgba(235, 225, 201, 0.12);
+  }
+
+  .view-switcher .mobile-footer-inspector-button.active {
+    color: #fff2d8;
+    background: #3b2422;
+    border-color: #7b3435;
   }
 
   .zoom-control {
@@ -2722,6 +2802,10 @@ textarea:focus-visible {
 }
 
 @media (max-width: 640px) and (orientation: portrait) {
+  .mobile-view-heading.is-below-orientation-hint {
+    top: 92px;
+  }
+
   .mobile-orientation-hint {
     position: fixed;
     z-index: 78;
@@ -2890,11 +2974,17 @@ textarea:focus-visible {
   .view-switcher {
     inset: auto 0 0 72px;
     height: var(--landscape-footer-height);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 150px));
+    align-items: center;
     justify-content: center;
+    gap: 4px;
+    padding: 0 8px;
   }
 
   .view-switcher button {
-    min-width: 108px;
+    width: 100%;
+    min-width: 0;
     justify-content: center;
   }
 
@@ -2913,6 +3003,26 @@ textarea:focus-visible {
   }
 
   .inspector {
-    height: min(90dvh, 460px);
+    inset: var(--landscape-topbar-height) 0 0 auto;
+    width: min(420px, 58vw);
+    height: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 0;
+    border-left: 2px solid #50493d;
+    border-radius: 12px 0 0;
+    transform: translateX(102%);
+  }
+
+  .inspector.is-mobile-open {
+    transform: translateX(0);
+  }
+
+  .inspector-header {
+    border-radius: 12px 0 0;
+  }
+
+  .tool-rail .mobile-inspector-button,
+  .view-switcher .new-board-button {
+    display: none;
   }
 }
