@@ -4,6 +4,7 @@ import type {
   EvidenceCard,
   PublicBoardPreview,
 } from "./DetectiveBoard";
+import { normalizeCaseGenre } from "./caseGenres";
 import { supabase } from "./supabaseClient";
 
 const CASE_ASSETS_BUCKET = "case-assets";
@@ -193,6 +194,20 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
   return ((data ?? []) as unknown as PublicBoardRow[]).map((row) => {
     const profile = joinOne(row.profiles);
     const publishedAt = row.published_at ?? new Date().toISOString();
+    const genre = normalizeCaseGenre(row.genre) || "未解事件";
+    const tags = [
+      genre,
+      ...(row.tags ?? [])
+        .map((tag) => normalizeCaseGenre(tag) || tag)
+        .filter((tag) => tag && tag !== genre),
+    ];
+    const preview: PublicBoardPreview = {
+      ...row.snapshot,
+      meta: {
+        ...row.snapshot.meta,
+        genre: normalizeCaseGenre(row.snapshot.meta?.genre) || genre,
+      },
+    };
     return {
       id: row.id,
       ownerId: row.owner_id,
@@ -202,14 +217,14 @@ export async function listPublicBoards(): Promise<CommunityBoard[]> {
       handle: profile.handle ? `@${profile.handle}` : "",
       authorAvatar: profile.avatar_url || "",
       description: row.description || "一份等待调查的公开案件板。",
-      tags: row.tags?.length ? row.tags : [row.genre],
-      genres: [row.genre],
+      tags,
+      genres: [genre],
       likes: countJoin(row.reactions),
       comments: countJoin(row.comments),
       views: Number(row.view_count ?? 0),
       publishedAt,
       time: relativeTime(publishedAt),
-      preview: row.snapshot,
+      preview,
     };
   });
 }
@@ -234,8 +249,17 @@ export async function getPublicBoard(
     viewCount = Number(nextViewCount ?? viewCount + 1);
   }
 
+  const sourcePreview = data.snapshot as PublicBoardPreview;
+  const preview: PublicBoardPreview = {
+    ...sourcePreview,
+    meta: {
+      ...sourcePreview.meta,
+      genre: normalizeCaseGenre(sourcePreview.meta?.genre) || "未解事件",
+    },
+  };
+
   return {
-    preview: data.snapshot as PublicBoardPreview,
+    preview,
     ownerId: data.owner_id,
     title: data.title,
     viewCount,

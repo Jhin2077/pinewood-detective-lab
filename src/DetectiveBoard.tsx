@@ -28,7 +28,11 @@ import {
   XIcon,
   type Icon,
 } from "./ui-kit/icons/PinewoodIcons";
-import { CASE_GENRES, type CaseGenre } from "./caseGenres";
+import {
+  CASE_GENRES,
+  normalizeCaseGenre,
+  type CaseGenre,
+} from "./caseGenres";
 import {
   type ChangeEvent,
   type DragEvent as ReactDragEvent,
@@ -168,7 +172,7 @@ function createBoardDocument(
   const now = new Date().toISOString();
   return {
     id,
-    meta: { ...meta, genre: meta.genre ?? "" },
+    meta: { ...meta, genre: normalizeCaseGenre(meta.genre) },
     cards: [...cards],
     links: [...links],
     createdAt: now,
@@ -374,7 +378,13 @@ export function DetectiveBoard({
           try {
             const parsed = JSON.parse(workspace) as WorkspaceSnapshot;
             if (parsed.version === 2 && Array.isArray(parsed.boards) && parsed.boards.length > 0) {
-              setBoards(parsed.boards);
+              setBoards(parsed.boards.map((board) => ({
+                ...board,
+                meta: {
+                  ...board.meta,
+                  genre: normalizeCaseGenre(board.meta?.genre),
+                },
+              })));
               setAssets(Array.isArray(parsed.assets) ? parsed.assets : []);
               setActiveBoardId(
                 parsed.boards.some((board) => board.id === parsed.activeBoardId)
