@@ -1297,8 +1297,8 @@ export function DetectiveBoard({
             <ArrowsClockwiseIcon size={22} />
           </span>
           <span>
-            <strong>建议横屏浏览案件板</strong>
-            <small>竖屏可从底部打开“档案抽屉”；旋转横屏可获得更宽的线索画布。</small>
+            <strong>建议横屏 · 优先电脑端</strong>
+            <small>为获得完整体验，请优先使用电脑端查看。手机端目前仅作为前期测试版，竖屏可从底部打开“档案抽屉”。</small>
           </span>
           <button
             onClick={() => {
