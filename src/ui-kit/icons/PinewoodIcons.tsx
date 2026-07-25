@@ -39,6 +39,7 @@ const iconFiles = {
   trash: "trash.svg",
   trend: "trend.svg",
   trophy: "trophy.svg",
+  undo: "undo.svg",
   upload: "upload.svg",
   user: "user.svg",
   "user-plus": "user-plus.svg",
@@ -121,6 +122,7 @@ export const TagIcon = icon("tag");
 export const TrashIcon = icon("trash");
 export const TrendUpIcon = icon("trend");
 export const TrophyIcon = icon("trophy");
+export const UndoIcon = icon("undo");
 export const UploadSimpleIcon = icon("upload");
 export const UserIcon = icon("user");
 export const UserPlusIcon = icon("user-plus");

@@ -23,6 +23,7 @@ import {
   StackIcon,
   TagIcon,
   TrashIcon,
+  UndoIcon,
   UploadSimpleIcon,
   UserIcon,
   XIcon,
@@ -180,6 +181,15 @@ function createBoardDocument(
   };
 }
 
+function cloneBoards(boards: BoardDocument[]): BoardDocument[] {
+  return boards.map((board) => ({
+    ...board,
+    meta: { ...board.meta },
+    cards: board.cards.map((card) => ({ ...card })),
+    links: board.links.map((link) => ({ ...link })),
+  }));
+}
+
 const INITIAL_BOARD = createBoardDocument(blankMeta, blankCards, blankLinks, "board-001");
 
 function resolveUpdate<T>(update: T | ((current: T) => T), current: T): T {
@@ -243,6 +253,7 @@ export function DetectiveBoard({
   const [publishing, setPublishing] = useState(false);
   const [deletingCurrentBoard, setDeletingCurrentBoard] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
+  const [canUndo, setCanUndo] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [portraitHintOpen, setPortraitHintOpen] = useState(
     () => window.sessionStorage.getItem("pinewood-mobile-landscape-hint") !== "dismissed",
@@ -264,6 +275,9 @@ export function DetectiveBoard({
   const panRef = useRef<{ pointerX: number; pointerY: number; panX: number; panY: number } | null>(null);
   const materialPointerDragRef = useRef<{ assetId: string; startX: number; startY: number } | null>(null);
   const publicPreviewRef = useRef(publicPreview);
+  const undoStackRef = useRef<BoardDocument[][]>([]);
+  const historyGroupOpenRef = useRef(false);
+  const historyGroupTimerRef = useRef<number | null>(null);
 
   const activeBoard = useMemo(
     () => boards.find((board) => board.id === activeBoardId) ?? boards[0] ?? INITIAL_BOARD,
@@ -271,6 +285,23 @@ export function DetectiveBoard({
   );
   const { cards, links, meta } = activeBoard;
   const activeBoardIndex = Math.max(0, boards.findIndex((board) => board.id === activeBoard.id));
+
+  const recordUndoSnapshot = useCallback(() => {
+    if (!mounted || sharedView) return;
+    if (!historyGroupOpenRef.current) {
+      undoStackRef.current.push(cloneBoards(boards));
+      if (undoStackRef.current.length > 20) undoStackRef.current.shift();
+      historyGroupOpenRef.current = true;
+      setCanUndo(true);
+    }
+    if (historyGroupTimerRef.current !== null) {
+      window.clearTimeout(historyGroupTimerRef.current);
+    }
+    historyGroupTimerRef.current = window.setTimeout(() => {
+      historyGroupOpenRef.current = false;
+      historyGroupTimerRef.current = null;
+    }, 420);
+  }, [boards, mounted, sharedView]);
 
   const updateActiveBoard = useCallback(
     (updater: (board: BoardDocument) => BoardDocument) => {
@@ -287,23 +318,26 @@ export function DetectiveBoard({
 
   const setCards = useCallback(
     (update: EvidenceCard[] | ((current: EvidenceCard[]) => EvidenceCard[])) => {
+      recordUndoSnapshot();
       updateActiveBoard((board) => ({ ...board, cards: resolveUpdate(update, board.cards) }));
     },
-    [updateActiveBoard],
+    [recordUndoSnapshot, updateActiveBoard],
   );
 
   const setLinks = useCallback(
     (update: EvidenceLink[] | ((current: EvidenceLink[]) => EvidenceLink[])) => {
+      recordUndoSnapshot();
       updateActiveBoard((board) => ({ ...board, links: resolveUpdate(update, board.links) }));
     },
-    [updateActiveBoard],
+    [recordUndoSnapshot, updateActiveBoard],
   );
 
   const setMeta = useCallback(
     (update: BoardMeta | ((current: BoardMeta) => BoardMeta)) => {
+      recordUndoSnapshot();
       updateActiveBoard((board) => ({ ...board, meta: resolveUpdate(update, board.meta) }));
     },
-    [updateActiveBoard],
+    [recordUndoSnapshot, updateActiveBoard],
   );
 
   const selected = cards.find((card) => card.id === selectedId) ?? null;
@@ -339,6 +373,32 @@ export function DetectiveBoard({
   const showToast = useCallback((message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 2400);
+  }, []);
+
+  const undoLastAction = useCallback(() => {
+    if (sharedView) return;
+    const previousBoards = undoStackRef.current.pop();
+    if (!previousBoards) return;
+    if (historyGroupTimerRef.current !== null) {
+      window.clearTimeout(historyGroupTimerRef.current);
+      historyGroupTimerRef.current = null;
+    }
+    historyGroupOpenRef.current = false;
+    setBoards(cloneBoards(previousBoards));
+    setSelectedId((current) => {
+      const previousActiveBoard = previousBoards.find((board) => board.id === activeBoardId);
+      return previousActiveBoard?.cards.some((card) => card.id === current) ? current : "";
+    });
+    setConnectionStart(null);
+    setContextMenu(null);
+    setCanUndo(undoStackRef.current.length > 0);
+    showToast("已撤回上一步操作");
+  }, [activeBoardId, sharedView, showToast]);
+
+  useEffect(() => () => {
+    if (historyGroupTimerRef.current !== null) {
+      window.clearTimeout(historyGroupTimerRef.current);
+    }
   }, []);
 
   useEffect(() => {
@@ -428,7 +488,19 @@ export function DetectiveBoard({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement)?.matches("input, textarea")) return;
+      const isEditingText = (event.target as HTMLElement)?.matches("input, textarea, select, [contenteditable='true']");
+      if (
+        (event.ctrlKey || event.metaKey)
+        && !event.shiftKey
+        && event.key.toLowerCase() === "z"
+        && !isEditingText
+        && !sharedView
+      ) {
+        event.preventDefault();
+        undoLastAction();
+        return;
+      }
+      if (isEditingText) return;
       if (event.key.toLowerCase() === "v") setActiveTool("select");
       if (event.key.toLowerCase() === "c") setActiveTool("connect");
       if (event.key === "Escape") {
@@ -1269,6 +1341,18 @@ export function DetectiveBoard({
         </div>
         <div className="top-actions">
           {headerStatusAddon}
+          {!sharedView && (
+            <button
+              className="undo-button"
+              onClick={undoLastAction}
+              disabled={!canUndo}
+              title="撤回上一步（Ctrl / ⌘ + Z）"
+              aria-label="撤回上一步"
+            >
+              <UndoIcon size={17} />
+              <span>撤回</span>
+            </button>
+          )}
           {sharedView ? (
             <span className="readonly-badge"><EyeIcon size={15} />只读调查 · 可拖动线索</span>
           ) : (

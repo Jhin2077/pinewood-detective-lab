@@ -238,6 +238,13 @@
     "license": "MIT"
   },
   {
+    "id": "undo",
+    "file": "svg/undo.svg",
+    "format": "SVG",
+    "source": "Pinewood UI",
+    "license": "Project asset"
+  },
+  {
     "id": "upload",
     "file": "svg/upload.svg",
     "format": "SVG",

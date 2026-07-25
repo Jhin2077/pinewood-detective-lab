@@ -357,6 +357,37 @@ textarea:focus-visible {
   font-size: 11px;
 }
 
+.undo-button {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 9px;
+  color: #d8cfbd;
+  background: #24231f;
+  border: 1px solid #3c3932;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.undo-button .pinewood-ui-icon {
+  color: #d6b867;
+}
+
+.undo-button:hover:not(:disabled) {
+  color: #fff3d4;
+  background: #302d27;
+  border-color: #6c6047;
+}
+
+.undo-button:disabled {
+  cursor: default;
+  opacity: 0.34;
+}
+
 .save-status {
   cursor: pointer;
 }
@@ -2434,6 +2465,11 @@ textarea:focus-visible {
   .case-search { display: none; }
   .brand-block { min-width: 350px; }
   .save-status, .local-creation-badge { display: none; }
+  .undo-button {
+    width: 34px;
+    padding: 0;
+  }
+  .undo-button span { display: none; }
   .footer-timeline { display: none; }
 }
 
@@ -2674,6 +2710,11 @@ textarea:focus-visible {
   }
 
   .presentation-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .undo-button {
     width: 36px;
     height: 36px;
   }
