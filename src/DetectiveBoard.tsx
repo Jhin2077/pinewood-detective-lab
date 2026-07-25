@@ -14,6 +14,7 @@ import {
   ImageIcon,
   LinkBreakIcon,
   LinkSimpleIcon,
+  MagnifyingGlassIcon,
   MinusIcon,
   NoteIcon,
   PlusIcon,
@@ -107,6 +108,29 @@ type MaterialAsset = {
   image: string;
   aspectRatio: number;
   createdAt: string;
+  category?: string;
+  keywords?: string[];
+  source?: "preset" | "custom";
+};
+
+type MaterialCategory = {
+  id: string;
+  label: string;
+  description: string;
+  count: number;
+};
+
+type MaterialLibraryManifest = {
+  version: number;
+  categories: MaterialCategory[];
+  assets: Array<{
+    id: string;
+    name: string;
+    image: string;
+    aspectRatio: number;
+    category: string;
+    keywords?: string[];
+  }>;
 };
 
 type MaterialDragPreview = {
@@ -145,11 +169,16 @@ const MIN_SCALE = 0.05;
 const MAX_SCALE = 8;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_IMAGE_LABEL = "2MB";
+const MATERIAL_PAGE_SIZE = 48;
 const clampScale = (value: number) => Math.max(MIN_SCALE, Math.min(MAX_SCALE, value));
 const WORKSPACE_STORAGE_KEY = "pinewood-case-lab-community-workspace-v4";
 const blankMeta: BoardMeta = { caseTitle: "未命名线索板", caseCode: "BOARD-001", genre: "" };
 const blankCards: EvidenceCard[] = [];
 const blankLinks: EvidenceLink[] = [];
+
+function resolvePublicAsset(path: string) {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+}
 
 const toolItems: Array<{ id: Tool | "graph" | "photo" | "person" | "evidence" | "sticky"; label: string; icon: Icon; shortcut?: string }> = [
   { id: "select", label: "选择", icon: CursorClickIcon, shortcut: "V" },
@@ -245,6 +274,12 @@ export function DetectiveBoard({
   const [inspectorMode, setInspectorMode] = useState<InspectorMode>("card");
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [assets, setAssets] = useState<MaterialAsset[]>([]);
+  const [presetAssets, setPresetAssets] = useState<MaterialAsset[]>([]);
+  const [materialCategories, setMaterialCategories] = useState<MaterialCategory[]>([]);
+  const [materialCategory, setMaterialCategory] = useState("all");
+  const [materialQuery, setMaterialQuery] = useState("");
+  const [materialVisibleCount, setMaterialVisibleCount] = useState(MATERIAL_PAGE_SIZE);
+  const [materialLibraryState, setMaterialLibraryState] = useState<"loading" | "ready" | "error">("loading");
   const [materialDragPreview, setMaterialDragPreview] = useState<MaterialDragPreview | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [scale, setScale] = useState(0.82);
@@ -342,9 +377,41 @@ export function DetectiveBoard({
     [recordUndoSnapshot, updateActiveBoard],
   );
 
+  const materialCatalog = useMemo(
+    () => [
+      ...presetAssets,
+      ...assets.map((asset) => ({
+        ...asset,
+        category: asset.category || "mine",
+        keywords: asset.keywords ?? [asset.name],
+        source: "custom" as const,
+      })),
+    ],
+    [assets, presetAssets],
+  );
+  const materialCategoryLabels = useMemo(
+    () => new Map(materialCategories.map((category) => [category.id, category.label])),
+    [materialCategories],
+  );
+  const filteredMaterials = useMemo(() => {
+    const query = materialQuery.trim().toLocaleLowerCase("zh-CN");
+    return materialCatalog.filter((asset) => {
+      const matchesCategory = materialCategory === "all"
+        || (materialCategory === "mine" ? asset.source === "custom" : asset.category === materialCategory);
+      if (!matchesCategory) return false;
+      if (!query) return true;
+      const haystack = [
+        asset.name,
+        asset.category ? materialCategoryLabels.get(asset.category) : "",
+        ...(asset.keywords ?? []),
+      ].join(" ").toLocaleLowerCase("zh-CN");
+      return haystack.includes(query);
+    });
+  }, [materialCatalog, materialCategory, materialCategoryLabels, materialQuery]);
+  const visibleMaterials = filteredMaterials.slice(0, materialVisibleCount);
   const selected = cards.find((card) => card.id === selectedId) ?? null;
   const draggingMaterial = materialDragPreview
-    ? assets.find((asset) => asset.id === materialDragPreview.assetId) ?? null
+    ? materialCatalog.find((asset) => asset.id === materialDragPreview.assetId) ?? null
     : null;
   const linkedCards = useMemo(() => {
     if (!selected) return [];
@@ -462,6 +529,38 @@ export function DetectiveBoard({
       setMounted(true);
     }, 0);
     return () => window.clearTimeout(initialization);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(resolvePublicAsset("assets/material-library/manifest.json"), {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Material library ${response.status}`);
+        return response.json() as Promise<MaterialLibraryManifest>;
+      })
+      .then((manifest) => {
+        setMaterialCategories(Array.isArray(manifest.categories) ? manifest.categories : []);
+        setPresetAssets(
+          (Array.isArray(manifest.assets) ? manifest.assets : []).map((asset) => ({
+            id: `preset-${asset.id}`,
+            name: asset.name,
+            image: resolvePublicAsset(asset.image),
+            aspectRatio: asset.aspectRatio || 1,
+            createdAt: "preset",
+            category: asset.category,
+            keywords: asset.keywords ?? [asset.name],
+            source: "preset",
+          })),
+        );
+        setMaterialLibraryState("ready");
+      })
+      .catch((error: unknown) => {
+        if ((error as DOMException)?.name === "AbortError") return;
+        setMaterialLibraryState("error");
+      });
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -882,6 +981,9 @@ export function DetectiveBoard({
               ? image.naturalWidth / image.naturalHeight
               : 1,
             createdAt: new Date().toISOString(),
+            category: "mine",
+            keywords: [file.name, "我的素材", "自定义素材"],
+            source: "custom",
           };
           setAssets((current) => [...current, asset]);
           completed += 1;
@@ -897,6 +999,7 @@ export function DetectiveBoard({
   };
 
   const removeMaterial = (asset: MaterialAsset) => {
+    if (asset.source === "preset") return;
     if (!window.confirm(`从素材库删除“${asset.name}”？已放到档案板上的图层不会受影响。`)) return;
     setAssets((current) => current.filter((item) => item.id !== asset.id));
     showToast("素材已从素材库删除");
@@ -926,7 +1029,7 @@ export function DetectiveBoard({
     setMaterialDragPreview(null);
     if (!drag) return;
     const moved = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
-    const asset = assets.find((item) => item.id === drag.assetId);
+    const asset = materialCatalog.find((item) => item.id === drag.assetId);
     const stage = stageRef.current;
     if (moved < 6 || !asset || !stage) return;
     const rect = stage.getBoundingClientRect();
@@ -952,7 +1055,7 @@ export function DetectiveBoard({
     const assetId =
       event.dataTransfer.getData("application/x-pinewood-material") ||
       event.dataTransfer.getData("text/plain");
-    const asset = assets.find((item) => item.id === assetId);
+    const asset = materialCatalog.find((item) => item.id === assetId);
     const stage = stageRef.current;
     if (!asset || !stage) return;
     const rect = stage.getBoundingClientRect();
@@ -1738,11 +1841,78 @@ export function DetectiveBoard({
             <div className="material-library-body">
               <div className="material-library-intro">
                 <div className="material-library-mark"><StackIcon size={28} weight="duotone" /></div>
-                <strong>自定义素材库</strong>
-                <p>上传透明 PNG、印章、胶带、划痕或其他档案素材，再拖到左侧画板上。单张图片不得超过 2MB。</p>
+                <strong>复古拼贴素材库</strong>
+                <p>
+                  {materialLibraryState === "ready"
+                    ? `${presetAssets.length} 件预置素材，按分类检索后拖到左侧画板。`
+                    : "正在装载复古拼贴、物件、背景与文字素材…"}
+                </p>
+              </div>
+              <div className="material-library-toolbar">
+                <label className="material-search">
+                  <MagnifyingGlassIcon size={15} />
+                  <input
+                    type="search"
+                    value={materialQuery}
+                    onChange={(event) => {
+                      setMaterialQuery(event.target.value);
+                      setMaterialVisibleCount(MATERIAL_PAGE_SIZE);
+                    }}
+                    placeholder="搜索素材名称或分类…"
+                    aria-label="搜索素材"
+                  />
+                  {materialQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMaterialQuery("");
+                        setMaterialVisibleCount(MATERIAL_PAGE_SIZE);
+                      }}
+                      aria-label="清空素材搜索"
+                    >
+                      <XIcon size={13} />
+                    </button>
+                  )}
+                </label>
+                <div className="material-category-tabs" role="tablist" aria-label="素材分类">
+                  <button
+                    className={materialCategory === "all" ? "active" : ""}
+                    onClick={() => {
+                      setMaterialCategory("all");
+                      setMaterialVisibleCount(MATERIAL_PAGE_SIZE);
+                    }}
+                    aria-pressed={materialCategory === "all"}
+                  >
+                    全部 <b>{materialCatalog.length}</b>
+                  </button>
+                  {materialCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      className={materialCategory === category.id ? "active" : ""}
+                      onClick={() => {
+                        setMaterialCategory(category.id);
+                        setMaterialVisibleCount(MATERIAL_PAGE_SIZE);
+                      }}
+                      aria-pressed={materialCategory === category.id}
+                      title={category.description}
+                    >
+                      {category.label} <b>{category.count}</b>
+                    </button>
+                  ))}
+                  <button
+                    className={materialCategory === "mine" ? "active" : ""}
+                    onClick={() => {
+                      setMaterialCategory("mine");
+                      setMaterialVisibleCount(MATERIAL_PAGE_SIZE);
+                    }}
+                    aria-pressed={materialCategory === "mine"}
+                  >
+                    我的素材 <b>{assets.length}</b>
+                  </button>
+                </div>
               </div>
               <button className="material-upload-button" onClick={() => materialInputRef.current?.click()}>
-                <UploadSimpleIcon size={16} />添加图片素材
+                <UploadSimpleIcon size={16} />上传我的图片素材
               </button>
               <input
                 ref={materialInputRef}
@@ -1752,30 +1922,68 @@ export function DetectiveBoard({
                 multiple
                 onChange={handleMaterialUpload}
               />
-              {assets.length === 0 ? (
+              {materialLibraryState === "error" && (
+                <div className="material-library-notice">
+                  预置素材暂时加载失败；仍可上传并使用你自己的图片。
+                </div>
+              )}
+              {materialLibraryState === "loading" && materialCatalog.length === 0 ? (
+                <div className="material-library-empty is-loading">
+                  <ArrowsClockwiseIcon size={30} className="spin" />
+                  <strong>正在整理素材缩略图</strong>
+                  <p>只会载入当前可见的图片，避免一次占用过多流量。</p>
+                </div>
+              ) : filteredMaterials.length === 0 ? (
                 <div className="material-library-empty">
-                  <ImageIcon size={34} />
-                  <strong>素材库暂时是空的</strong>
-                  <p>这里会保存你上传的图片。以后预置的透明档案图层也会放在这里。</p>
+                  <MagnifyingGlassIcon size={34} />
+                  <strong>没有找到匹配素材</strong>
+                  <p>换一个分类或搜索词，也可以上传自己的透明图片。</p>
                 </div>
               ) : (
-                <div className="material-library-grid">
-                  {assets.map((asset) => (
-                    <article
-                      key={asset.id}
-                      className="material-library-item"
-                      onPointerDown={(event) => onMaterialPointerDown(event, asset)}
-                      title="拖到左侧画板添加"
+                <>
+                  <div className="material-results-summary">
+                    <span>{filteredMaterials.length} 件素材</span>
+                    <small>拖拽或点击＋添加到画板</small>
+                  </div>
+                  <div className="material-library-grid">
+                    {visibleMaterials.map((asset) => (
+                      <article
+                        key={asset.id}
+                        className={`material-library-item ${asset.source === "preset" ? "is-preset" : "is-custom"}`}
+                        onPointerDown={(event) => onMaterialPointerDown(event, asset)}
+                        title="拖到左侧画板添加"
+                      >
+                        <div className="material-thumbnail">
+                          <img
+                            src={asset.image}
+                            alt={asset.name}
+                            loading="lazy"
+                            decoding="async"
+                            draggable={false}
+                          />
+                        </div>
+                        <div className="material-item-copy">
+                          <strong>{asset.name}</strong>
+                          <span>{asset.source === "custom" ? "我的素材" : materialCategoryLabels.get(asset.category ?? "") || "预置素材"}</span>
+                        </div>
+                        <div className={`material-item-actions ${asset.source === "preset" ? "single-action" : ""}`}>
+                          <button onClick={() => addMaterialToBoard(asset)} title="添加到画板" aria-label={`添加“${asset.name}”到画板`}><PlusIcon size={14} /></button>
+                          {asset.source !== "preset" && (
+                            <button onClick={() => removeMaterial(asset)} title="删除素材" aria-label={`删除素材“${asset.name}”`}><TrashIcon size={14} /></button>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  {visibleMaterials.length < filteredMaterials.length && (
+                    <button
+                      className="material-load-more"
+                      onClick={() => setMaterialVisibleCount((current) => current + MATERIAL_PAGE_SIZE)}
                     >
-                      <div className="material-thumbnail"><img src={asset.image} alt={asset.name} draggable={false} /></div>
-                      <div className="material-item-copy"><strong>{asset.name}</strong><span>拖到画板</span></div>
-                      <div className="material-item-actions">
-                        <button onClick={() => addMaterialToBoard(asset)} title="添加到画板" aria-label={`添加“${asset.name}”到画板`}><PlusIcon size={14} /></button>
-                        <button onClick={() => removeMaterial(asset)} title="删除素材" aria-label={`删除素材“${asset.name}”`}><TrashIcon size={14} /></button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                      再显示 {Math.min(MATERIAL_PAGE_SIZE, filteredMaterials.length - visibleMaterials.length)} 件
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ) : selected ? (
