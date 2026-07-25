@@ -227,6 +227,7 @@ export function DetectiveBoard({
   const [connectionStart, setConnectionStart] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<CardContextMenu | null>(null);
   const [inspectorMode, setInspectorMode] = useState<InspectorMode>("card");
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [assets, setAssets] = useState<MaterialAsset[]>([]);
   const [materialDragPreview, setMaterialDragPreview] = useState<MaterialDragPreview | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("board");
@@ -239,13 +240,23 @@ export function DetectiveBoard({
   const [deletingCurrentBoard, setDeletingCurrentBoard] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [mounted, setMounted] = useState(false);
+  const [portraitHintOpen, setPortraitHintOpen] = useState(
+    () => window.sessionStorage.getItem("pinewood-mobile-landscape-hint") !== "dismissed",
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const materialInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ id: string; pointerX: number; pointerY: number; cardX: number; cardY: number } | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    pointerX: number;
+    pointerY: number;
+    cardX: number;
+    cardY: number;
+    moved: boolean;
+  } | null>(null);
   const panRef = useRef<{ pointerX: number; pointerY: number; panX: number; panY: number } | null>(null);
   const materialPointerDragRef = useRef<{ assetId: string; startX: number; startY: number } | null>(null);
   const publicPreviewRef = useRef(publicPreview);
@@ -449,6 +460,7 @@ export function DetectiveBoard({
         pointerY: event.clientY,
         cardX: card.x,
         cardY: card.y,
+        moved: false,
       };
       return;
     }
@@ -484,12 +496,16 @@ export function DetectiveBoard({
       pointerY: event.clientY,
       cardX: card.x,
       cardY: card.y,
+      moved: false,
     };
   };
 
   const onCardPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
     if (!drag) return;
+    if (Math.hypot(event.clientX - drag.pointerX, event.clientY - drag.pointerY) > 5) {
+      drag.moved = true;
+    }
     const nextX = drag.cardX + (event.clientX - drag.pointerX) / scale;
     const nextY = drag.cardY + (event.clientY - drag.pointerY) / scale;
     setCards((current) => current.map((card) => (
@@ -498,6 +514,16 @@ export function DetectiveBoard({
   };
 
   const onCardPointerUp = () => {
+    const drag = dragRef.current;
+    if (
+      drag
+      && !drag.moved
+      && window.matchMedia("(max-width: 880px)").matches
+    ) {
+      setSelectedId(drag.id);
+      setInspectorMode("card");
+      setMobileInspectorOpen(true);
+    }
     dragRef.current = null;
   };
 
@@ -567,7 +593,7 @@ export function DetectiveBoard({
   };
 
   const onStagePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (activeTool === "pan" || event.button === 1) {
+    if (activeTool === "pan" || event.button === 1 || event.pointerType === "touch") {
       setContextMenu(null);
       event.currentTarget.setPointerCapture(event.pointerId);
       panRef.current = { pointerX: event.clientX, pointerY: event.clientY, panX: pan.x, panY: pan.y };
@@ -696,6 +722,7 @@ export function DetectiveBoard({
     setCards((current) => [...current, card]);
     setSelectedId(id);
     setInspectorMode("card");
+    setMobileInspectorOpen(true);
     setActiveTool("select");
     setViewMode("board");
     showToast(`${preset.title}已放到线索板中央`);
@@ -704,6 +731,7 @@ export function DetectiveBoard({
   const openMaterialLibrary = () => {
     if (sharedView) return;
     setInspectorMode("library");
+    setMobileInspectorOpen(true);
     setSelectedId("");
     setConnectionStart(null);
     setContextMenu(null);
@@ -1240,12 +1268,20 @@ export function DetectiveBoard({
             </button>
           )}
           {!sharedView && <span className="local-creation-badge"><FloppyDiskIcon size={15} />本地草稿</span>}
-          <button className="presentation-button" onClick={togglePresentation}><PresentationIcon size={17} weight="bold" /><span>展示线索板</span></button>
+          <button
+            className="presentation-button"
+            onClick={togglePresentation}
+            aria-label={presentation ? "退出展示模式" : "展示线索板"}
+            title={presentation ? "退出展示模式" : "展示线索板"}
+          >
+            <PresentationIcon size={17} weight="bold" /><span>展示线索板</span>
+          </button>
           {!sharedView && (
             <button
               className="presentation-button"
               onClick={shareBoard}
               title="发布到公共案件板"
+              aria-label={publishing ? "正在发布到社区" : "发布到社区"}
               disabled={publishing}
             >
               <ShareNetworkIcon size={18} />
@@ -1254,6 +1290,26 @@ export function DetectiveBoard({
           )}
         </div>
       </header>
+
+      {portraitHintOpen && (
+        <aside className="mobile-orientation-hint" role="status">
+          <span className="mobile-orientation-icon" aria-hidden="true">
+            <ArrowsClockwiseIcon size={22} />
+          </span>
+          <span>
+            <strong>建议横屏浏览案件板</strong>
+            <small>旋转手机后，线索画布和操作区域会显示得更完整。</small>
+          </span>
+          <button
+            onClick={() => {
+              window.sessionStorage.setItem("pinewood-mobile-landscape-hint", "dismissed");
+              setPortraitHintOpen(false);
+            }}
+          >
+            知道了
+          </button>
+        </aside>
+      )}
 
       {!presentation && (
         <aside className="tool-rail" aria-label="线索工具">
@@ -1272,6 +1328,13 @@ export function DetectiveBoard({
           <div className="rail-divider" />
           <button className={inspectorMode === "library" ? "active" : ""} onClick={openMaterialLibrary} title="打开素材库">
             <StackIcon size={21} weight={inspectorMode === "library" ? "fill" : "regular"} /><span>素材库</span>
+          </button>
+          <button
+            className="mobile-inspector-button"
+            onClick={() => setMobileInspectorOpen(true)}
+            title="打开档案抽屉"
+          >
+            <FileTextIcon size={21} /><span>档案</span>
           </button>
           <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/*" onChange={handlePhoto} />
         </aside>
@@ -1367,7 +1430,16 @@ export function DetectiveBoard({
               <div className="view-heading"><ClockIcon size={24} /><div><span>CASE CHRONOLOGY</span><h2>案件时间线</h2></div></div>
               <div className="timeline-spine">
                 {[...cards].sort((a, b) => a.date.localeCompare(b.date)).map((card, index) => (
-                  <button key={card.id} className={`timeline-event ${selectedId === card.id ? "active" : ""}`} onClick={() => setSelectedId(card.id)} style={{ left: 75 + index * 125 }}>
+                  <button
+                    key={card.id}
+                    className={`timeline-event ${selectedId === card.id ? "active" : ""}`}
+                    onClick={() => {
+                      setSelectedId(card.id);
+                      setInspectorMode("card");
+                      setMobileInspectorOpen(true);
+                    }}
+                    style={{ left: 75 + index * 125 }}
+                  >
                     <span className="timeline-dot" />
                     <time>{card.date.slice(5).replace("-", ".")}</time>
                     <strong>{card.title}</strong>
@@ -1398,7 +1470,16 @@ export function DetectiveBoard({
                 const x = 620 + Math.cos((index / cards.length) * Math.PI * 2) * 360;
                 const y = 390 + Math.sin((index / cards.length) * Math.PI * 2) * 245;
                 return (
-                  <button key={card.id} className={`graph-node ${card.id === selectedId ? "active" : ""}`} style={{ left: x, top: y }} onClick={() => setSelectedId(card.id)}>
+                  <button
+                    key={card.id}
+                    className={`graph-node ${card.id === selectedId ? "active" : ""}`}
+                    style={{ left: x, top: y }}
+                    onClick={() => {
+                      setSelectedId(card.id);
+                      setInspectorMode("card");
+                      setMobileInspectorOpen(true);
+                    }}
+                  >
                     <span>{card.category}</span><strong>{card.title}</strong>
                   </button>
                 );
@@ -1464,8 +1545,16 @@ export function DetectiveBoard({
         </div>
       )}
 
+      {!presentation && mobileInspectorOpen && (
+        <button
+          className="mobile-inspector-backdrop"
+          onClick={() => setMobileInspectorOpen(false)}
+          aria-label="关闭档案抽屉"
+        />
+      )}
+
       {!presentation && (
-        <aside className="inspector">
+        <aside className={`inspector ${mobileInspectorOpen ? "is-mobile-open" : ""}`}>
           <div className="inspector-header">
             <div>
               <span>{inspectorMode === "library" ? "ASSET LIBRARY" : "CASE DRAWER"}</span>
@@ -1474,10 +1563,34 @@ export function DetectiveBoard({
             <div className="inspector-header-actions">
               {inspectorMode === "card" && inspectorHeaderAddon}
               {inspectorMode === "library" ? (
-                <button onClick={() => setInspectorMode("card")} aria-label="关闭素材库"><XIcon size={17} /></button>
+                <button
+                  onClick={() => {
+                    setInspectorMode("card");
+                    setMobileInspectorOpen(false);
+                  }}
+                  aria-label="关闭素材库"
+                >
+                  <XIcon size={17} />
+                </button>
               ) : selected ? (
-                <button onClick={() => setSelectedId("")} aria-label="关闭档案"><XIcon size={17} /></button>
-              ) : null}
+                <button
+                  onClick={() => {
+                    setSelectedId("");
+                    setMobileInspectorOpen(false);
+                  }}
+                  aria-label="关闭档案"
+                >
+                  <XIcon size={17} />
+                </button>
+              ) : (
+                <button
+                  className="mobile-inspector-close"
+                  onClick={() => setMobileInspectorOpen(false)}
+                  aria-label="关闭档案抽屉"
+                >
+                  <XIcon size={17} />
+                </button>
+              )}
             </div>
           </div>
           <section className="current-board-panel">

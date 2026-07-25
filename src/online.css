@@ -1754,6 +1754,68 @@
   }
 }
 
+@media (max-width: 940px) and (max-height: 520px) and (orientation: landscape) {
+  .online-board-stage {
+    --landscape-topbar-height: 64px;
+  }
+
+  .board-header-addon {
+    position: absolute;
+    z-index: 80;
+    left: auto;
+    right: 140px;
+    top: 13px;
+    bottom: auto;
+    display: flex;
+    transform: none;
+  }
+
+  .online-preview-ribbon {
+    height: 36px;
+    padding: 2px;
+  }
+
+  .online-preview-ribbon button {
+    width: 32px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .online-board-stage .top-actions {
+    right: 8px;
+  }
+
+  .online-viewer-presence {
+    min-width: 0;
+    height: 36px;
+    padding: 0 5px;
+  }
+
+  .online-viewer-presence > small,
+  .online-viewer-count {
+    display: none;
+  }
+
+  .online-viewer-stack .online-avatar {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  .online-viewer-stack .online-avatar:nth-of-type(n + 4) {
+    display: none;
+  }
+
+  .online-case-comments-panel {
+    position: fixed;
+    z-index: 110;
+    inset: var(--landscape-topbar-height) 0 0;
+    width: min(420px, 52vw);
+    max-width: none;
+    margin-left: auto;
+    border-left: 1px solid rgba(235, 225, 201, 0.16);
+  }
+}
+
 @media (max-width: 1180px) {
   .online-header {
     grid-template-columns: 230px 1fr 74px;
@@ -1932,5 +1994,72 @@
   .online-primary,
   .online-secondary {
     transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .online-board-stage {
+    --mobile-topbar-height: calc(102px + env(safe-area-inset-top));
+  }
+
+  .online-board-stage .topbar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .online-board-stage .brand-block {
+    grid-column: 1;
+  }
+
+  .board-header-addon {
+    position: static;
+    z-index: auto;
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .online-board-stage .top-actions {
+    grid-column: 3;
+  }
+
+  .online-preview-ribbon {
+    height: 36px;
+    padding: 2px;
+    border-radius: 5px;
+  }
+
+  .online-preview-ribbon button {
+    width: 32px;
+    height: 30px;
+  }
+
+  .online-viewer-presence {
+    height: 36px;
+    padding: 0 5px;
+  }
+
+  .online-viewer-stack .online-avatar {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  .online-viewer-stack .online-avatar:nth-of-type(n + 4) {
+    display: none;
+  }
+
+  .online-case-comments-panel {
+    position: fixed;
+    z-index: 110;
+    inset: var(--mobile-topbar-height) 0 0;
+    width: 100vw;
+    max-width: none;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-left: 0;
+  }
+
+  .online-case-comments-list {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }

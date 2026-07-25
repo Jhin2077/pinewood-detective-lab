@@ -797,7 +797,9 @@ function CommunityHome({
   const [recentBoardIds, setRecentBoardIds] = useState<string[]>([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const mobileAvatarInputRef = useRef<HTMLInputElement>(null);
   const [theme, setTheme] = useState<CommunityTheme>(() => {
     const storedTheme = window.localStorage.getItem(COMMUNITY_THEME_KEY);
     return storedTheme === "dark" || storedTheme === "light" ? storedTheme : "light";
@@ -984,6 +986,19 @@ function CommunityHome({
             <button className="community-plain-login" onClick={() => onOpenAuth("signin")}><SignInIcon size={17} />登录</button>
           )}
           <button
+            className="community-mobile-account-toggle"
+            onClick={() => {
+              if (session) setMobileAccountOpen(true);
+              else onOpenAuth("signin");
+            }}
+            aria-label={session ? "打开个人账户" : "登录或注册"}
+            title={session ? "个人账户" : "登录或注册"}
+          >
+            {session
+              ? <ProfileAvatar url={profile?.avatarUrl} name={profile?.displayName || "我的档案"} size={26} />
+              : <UserIcon size={18} />}
+          </button>
+          <button
             className="community-theme-toggle"
             onClick={() => setTheme((current) => current === "light" ? "dark" : "light")}
             aria-label={theme === "light" ? "切换到夜间模式" : "切换到日间模式"}
@@ -1061,6 +1076,19 @@ function CommunityHome({
               }}>清除筛选</button>
             </div>
           )}
+
+          <label className="community-mobile-genre-filter">
+            <span>案件类型</span>
+            <select
+              value={activeGenre}
+              onChange={(event) => setActiveGenre(event.target.value)}
+              aria-label="筛选案件类型"
+            >
+              {CASE_GENRES.map((genre) => (
+                <option key={genre} value={genre === "全部案件" ? "" : genre}>{genre}</option>
+              ))}
+            </select>
+          </label>
 
           <div className="community-board-list">
             {visibleBoards.map((board) => (
@@ -1246,6 +1274,92 @@ function CommunityHome({
             )));
           }}
         />
+      )}
+      {session && mobileAccountOpen && (
+        <div
+          className="community-mobile-account-backdrop"
+          role="presentation"
+          onPointerDown={() => setMobileAccountOpen(false)}
+        >
+          <aside
+            className="community-mobile-account-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="个人账户"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <small>DETECTIVE PROFILE</small>
+                <strong>个人账户</strong>
+              </div>
+              <button onClick={() => setMobileAccountOpen(false)} aria-label="关闭个人账户">×</button>
+            </header>
+            <section className="community-account-panel">
+              <span className="community-account-icon">
+                <ProfileAvatar url={profile?.avatarUrl} name={profile?.displayName || "我的档案"} size={48} />
+              </span>
+              <strong>欢迎回来，{profile?.displayName || "侦探"}</strong>
+              <p>继续创作、保存并公开你的案件板。</p>
+              <button
+                className="community-avatar-upload"
+                onClick={() => mobileAvatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+              >
+                <UploadSimpleIcon size={16} />
+                {uploadingAvatar ? "上传中…" : "上传头像"}
+              </button>
+              <input
+                ref={mobileAvatarInputRef}
+                className="visually-hidden"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(event) => void changeAvatar(event)}
+              />
+              {avatarMessage && <span className="community-avatar-message">{avatarMessage}</span>}
+              <button
+                className="community-account-primary"
+                onClick={() => {
+                  setMobileAccountOpen(false);
+                  navigate("board");
+                }}
+              >
+                <PlusIcon size={17} />进入案件板
+              </button>
+              <button
+                className="community-account-secondary"
+                onClick={() => {
+                  setMobileAccountOpen(false);
+                  onLogout();
+                }}
+              >
+                退出登录
+              </button>
+            </section>
+            <section className="community-side-panel community-recent">
+              <h2><FolderOpenIcon size={19} />最近浏览</h2>
+              {recentBoards.length > 0 ? (
+                <div className="community-recent-list">
+                  {recentBoards.map((board, index) => (
+                    <button
+                      key={board.id}
+                      onClick={() => {
+                        setMobileAccountOpen(false);
+                        navigate("board", board.id);
+                      }}
+                    >
+                      <b>{String(index + 1).padStart(2, "0")}</b>
+                      <span><strong>{board.title}</strong><small>{board.author} · {board.time}</small></span>
+                      <EyeIcon size={14} />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p>打开过的公开案件会出现在这里，方便继续调查。</p>
+              )}
+            </section>
+          </aside>
+        </div>
       )}
     </div>
   );
