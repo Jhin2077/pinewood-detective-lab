@@ -526,29 +526,42 @@
   padding: 0 10px 10px;
 }
 
-.community-ranking > div > button {
+.community-ranking > div > button,
+.community-ranking > div > article {
   width: 100%;
-  min-height: 82px;
+  min-height: 62px;
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-columns: 23px 30px minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
-  padding: 9px 6px;
+  gap: 8px;
+  padding: 8px 6px;
   color: inherit;
   background: transparent;
   border: 0;
   border-top: 1px solid #2b2b2b;
   text-align: left;
-  cursor: pointer;
 }
 
 .community-ranking > div > button:hover {
   background: #222;
 }
 
-.community-ranking > div > button > b {
+.community-ranking > div > button > b,
+.community-ranking > div > article > b {
   color: #d2d5db;
   font-size: 15px;
+}
+
+.community-ranking > div > article:nth-of-type(1) > b {
+  color: #e0b322;
+}
+
+.community-ranking > div > article:nth-of-type(2) > b {
+  color: #b6b8b3;
+}
+
+.community-ranking > div > article:nth-of-type(3) > b {
+  color: #b97c4a;
 }
 
 .community-ranking strong,
@@ -585,6 +598,15 @@
 .community-ranking i svg:not(:first-child),
 .community-ranking i .pinewood-ui-icon:not(:first-child) {
   margin-left: 5px;
+}
+
+.community-ranking-empty {
+  margin: 0;
+  padding: 18px 8px 20px;
+  color: var(--community-muted);
+  font-size: 9px;
+  line-height: 1.65;
+  text-align: center;
 }
 
 .community-feed {
@@ -1060,6 +1082,51 @@
   color: #a2a7b0;
   font-size: 11px;
   line-height: 1.55;
+}
+
+.community-account-reputation {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: -4px 0 13px;
+}
+
+.community-account-reputation > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px 8px;
+  background: var(--community-card);
+  border: 1px solid var(--community-border);
+  border-radius: 7px;
+  text-align: left;
+}
+
+.community-account-reputation > span.is-rank {
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--community-red) 54%, var(--community-border));
+}
+
+.community-account-reputation small {
+  color: var(--community-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+}
+
+.community-account-reputation strong {
+  overflow: hidden;
+  color: var(--community-text);
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.community-account-reputation .is-rank strong {
+  color: var(--community-red);
+  letter-spacing: 0.04em;
 }
 
 .community-account-primary,
@@ -1556,6 +1623,54 @@
 .community-comment-reply-trigger:hover {
   color: #fffdf2;
   background: var(--community-red);
+}
+
+.community-comment-actions,
+.online-case-comment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.community-comment-actions .community-comment-reply-trigger,
+.online-case-comment-actions .online-case-comment-reply-trigger {
+  margin-top: 0;
+}
+
+.comment-like-button {
+  min-width: 50px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  color: var(--community-muted, #9a9386);
+  background: transparent;
+  border: 1px solid var(--community-border, #403b33);
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+}
+
+.comment-like-button:hover:not(:disabled),
+.comment-like-button.is-active {
+  color: #fff2e8;
+  background: var(--community-red, #d63031);
+  border-color: var(--community-red, #d63031);
+}
+
+.comment-like-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.community-comment-reply .comment-like-button {
+  height: 25px;
+  margin-top: 7px;
 }
 
 .community-comment-replies {
@@ -2072,7 +2187,8 @@
   border-color: var(--community-border);
 }
 
-.community-ranking > div > button {
+.community-ranking > div > button,
+.community-ranking > div > article {
   border-top-color: var(--community-border-soft);
 }
 
@@ -2082,7 +2198,8 @@
   background: var(--community-hover);
 }
 
-.community-ranking > div > button > b {
+.community-ranking > div > button > b,
+.community-ranking > div > article > b {
   color: var(--community-red);
   font-family: "Wire One", "Arial Narrow", sans-serif;
   font-size: 24px;
@@ -2286,6 +2403,7 @@
 
 .community-mobile-account-toggle,
 .community-mobile-genre-filter,
+.community-mobile-ranking,
 .community-mobile-account-backdrop {
   display: none;
 }
@@ -2347,6 +2465,39 @@
     border: 1px solid var(--community-border-soft);
     border-radius: 6px;
     outline: 0;
+  }
+
+  .community-mobile-ranking {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .community-mobile-ranking > header {
+    height: 54px;
+  }
+
+  .community-mobile-ranking > div {
+    display: grid;
+    grid-auto-columns: minmax(176px, 46vw);
+    grid-auto-flow: column;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 0 10px 10px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .community-mobile-ranking > div > article {
+    min-height: 66px;
+    background: var(--community-card);
+    border: 1px solid var(--community-border-soft);
+    border-radius: 7px;
+    scroll-snap-align: start;
+  }
+
+  .community-mobile-ranking .community-ranking-empty {
+    grid-column: 1;
+    width: min(360px, calc(100vw - 52px));
   }
 
   .community-mobile-account-backdrop {

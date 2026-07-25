@@ -1,5 +1,65 @@
 # Design QA
 
+## 2026-07-25 — comment reputation and detective ranking
+
+- Source visual truth:
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-f8b9ec87-21db-4abe-8b94-ba976a120bb3.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-d17c6eaf-43dc-400e-af6c-bbe9b3d958fa.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-e845a234-2653-44f2-95c6-5720a8e37047.png`
+  - `C:\Users\ALIENWARE\AppData\Local\Temp\codex-clipboard-1af43fb5-0e91-4768-b0bb-c3074ac0d8c0.png`
+- Browser-rendered implementation:
+  - `qa/community-reputation-1280x720.png`
+  - `qa/board-comment-entry-1280x720.png`
+  - `qa/board-comments-likes-1280x720.png`
+  - `qa/community-ranking-mobile-390x844.png`
+  - `qa/board-comment-entry-mobile-390x844.png`
+  - `qa/board-comments-likes-mobile-390x844.png`
+- Combined comparison:
+  - `qa/community-ranking-comparison.png`
+- Viewports: 1280 × 720 desktop and 390 × 844 mobile portrait at browser density 1.
+- State: night-theme desktop community matching the source, light-theme mobile community, signed-out public case, real Supabase boards, real public comments, and real detective leaderboard rows.
+
+### Comparison findings
+
+- [P1] The new leaderboard was hidden on mobile because the desktop left rail collapses.
+  - Fix: added a compact horizontal mobile leaderboard immediately after the mobile case-type selector.
+  - Post-fix evidence: all public users can see rank, avatar, title, received likes, and received replies at 390 × 844.
+
+- [P1] Public-board discussion remained too easy to miss in the small inspector-header action.
+  - Fix: added a centered search-bar-style “协助探案” entry above the footer, with live comment count and a larger pointer target.
+  - Post-fix evidence: the entry is visible without opening the drawer at both 1280 × 720 and 390 × 844; activation opens the existing discussion panel.
+
+- [P1] Comments and creator replies had no reputation action.
+  - Fix: added per-message like controls to root comments and replies. Anonymous users are routed to sign-in, self-likes are disabled, and backend state determines the active/count state.
+  - Post-fix evidence: all three real messages and the creator reply show like controls in both desktop and mobile discussion panels.
+
+- [P2] The profile card did not explain a user's accumulated community standing.
+  - Fix: added current detective title, received-like count, and received-reply count using the existing account-card visual language.
+  - Post-fix evidence: the authenticated rendering path is data-backed by `get_detective_profile_stats`; signed-out cards remain uncluttered.
+
+- [P2] The original left-rail target had no visible relationship between classification and ranking.
+  - Fix: preserved the existing case-type wheel exactly and placed the new ranking panel directly beneath it. The combined comparison shows both the source panel and the extended implementation in one frame.
+
+### Interaction, data, and console checks
+
+- Applied the Supabase schema migration successfully in the Codex in-app browser.
+- Confirmed the `八卦` type appears in desktop and mobile selectors and in the public-board read-only genre control.
+- Confirmed the anonymous leaderboard RPC returns three real community detectives without console errors.
+- Confirmed the board discussion API returns the existing two root comments plus one creator reply, each with a backend like count.
+- Confirmed the prominent board entry opens the discussion drawer on desktop and a full-width discussion surface on mobile.
+- Confirmed lint, TypeScript compilation, production build, and `git diff --check` pass.
+- Browser console warnings/errors: none.
+- Residual test gap: a live multi-user like toggle was not left in production data; the insert/delete RLS path is covered by the schema and authenticated client code but was not exercised with a disposable second account.
+
+### Fidelity surfaces
+
+- Typography: existing Wire One co-brand, compact monospace metadata, serif evidence labels, and Chinese hierarchy remain unchanged.
+- Colors and materials: the established red, gold, paper, charcoal, and cork tokens are reused; no new palette or fabricated asset was introduced.
+- Spacing: the leaderboard follows the existing 22 px rail rhythm, while mobile cards use horizontal scrolling to preserve readable names and counts.
+- Interaction: the new large comment entry does not block canvas pan/zoom because its stage add-on stops pointer and wheel propagation only inside its own hit area.
+
+final result: passed
+
 ## Current iteration — community identity, presence, comments, and rail order
 
 - Source visual truth:

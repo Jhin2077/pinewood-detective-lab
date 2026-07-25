@@ -5,6 +5,7 @@ import type {
   PublicBoardPreview,
 } from "./DetectiveBoard";
 import { normalizeCaseGenre } from "./caseGenres";
+import { detectiveRankForLikes } from "./detectiveRanks";
 import { supabase } from "./supabaseClient";
 
 const CASE_ASSETS_BUCKET = "case-assets";
@@ -58,6 +59,9 @@ export type CommunityProfile = {
   displayName: string;
   handle: string;
   avatarUrl: string;
+  likesReceived: number;
+  repliesReceived: number;
+  rankTitle: string;
 };
 
 export type BoardComment = {
@@ -70,6 +74,24 @@ export type BoardComment = {
   avatarUrl: string;
   createdAt: string;
   time: string;
+  likeCount: number;
+  likedByCurrentUser: boolean;
+};
+
+export type DetectiveLeaderboardEntry = {
+  userId: string;
+  displayName: string;
+  handle: string;
+  avatarUrl: string;
+  likesReceived: number;
+  repliesReceived: number;
+  rankTitle: string;
+};
+
+export type DetectiveProfileStats = {
+  likesReceived: number;
+  repliesReceived: number;
+  rankTitle: string;
 };
 
 export type BoardViewer = {
@@ -363,18 +385,69 @@ async function deleteOwnedBoardRecord(
 }
 
 export async function getProfile(userId: string): Promise<CommunityProfile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("display_name, handle, avatar_url")
-    .eq("id", userId)
-    .maybeSingle();
+  const [{ data, error }, stats] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, handle, avatar_url")
+      .eq("id", userId)
+      .maybeSingle(),
+    getDetectiveProfileStats(userId),
+  ]);
   if (error) throw error;
   if (!data) return null;
   return {
     displayName: data.display_name,
     handle: data.handle ? `@${data.handle}` : "",
     avatarUrl: data.avatar_url || "",
+    ...stats,
   };
+}
+
+export async function getDetectiveProfileStats(
+  userId: string,
+): Promise<DetectiveProfileStats> {
+  const { data, error } = await supabase
+    .rpc("get_detective_profile_stats", { target_user_id: userId })
+    .maybeSingle();
+  if (error) throw error;
+  const row = data as {
+    likes_received?: number | string;
+    replies_received?: number | string;
+  } | null;
+  const likesReceived = Number(row?.likes_received ?? 0);
+  return {
+    likesReceived,
+    repliesReceived: Number(row?.replies_received ?? 0),
+    rankTitle: detectiveRankForLikes(likesReceived).title,
+  };
+}
+
+export async function listDetectiveLeaderboard(
+  limit = 5,
+): Promise<DetectiveLeaderboardEntry[]> {
+  const { data, error } = await supabase
+    .rpc("get_detective_leaderboard", { max_rows: limit });
+  if (error) throw error;
+
+  return ((data ?? []) as Array<{
+    user_id: string;
+    display_name: string;
+    handle: string | null;
+    avatar_url: string | null;
+    likes_received: number | string;
+    replies_received: number | string;
+  }>).map((row) => {
+    const likesReceived = Number(row.likes_received ?? 0);
+    return {
+      userId: row.user_id,
+      displayName: row.display_name || "社区侦探",
+      handle: row.handle ? `@${row.handle}` : "",
+      avatarUrl: row.avatar_url || "",
+      likesReceived,
+      repliesReceived: Number(row.replies_received ?? 0),
+      rankTitle: detectiveRankForLikes(likesReceived).title,
+    };
+  });
 }
 
 export async function uploadProfileAvatar(
@@ -460,7 +533,10 @@ export async function toggleBoardLike(
   return true;
 }
 
-export async function listBoardComments(boardId: string): Promise<BoardComment[]> {
+export async function listBoardComments(
+  boardId: string,
+  currentUserId = "",
+): Promise<BoardComment[]> {
   const { data, error } = await supabase
     .from("comments")
     .select(`
@@ -469,20 +545,36 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
       parent_id,
       body,
       created_at,
-      profiles!comments_author_id_fkey(display_name, handle, avatar_url)
+      profiles!comments_author_id_fkey(display_name, handle, avatar_url),
+      comment_reactions(count)
     `)
     .eq("board_id", boardId)
     .order("created_at", { ascending: true });
   if (error) throw error;
 
-  return ((data ?? []) as unknown as Array<{
+  const rows = (data ?? []) as unknown as Array<{
     id: string;
     author_id: string;
     parent_id: string | null;
     body: string;
     created_at: string;
     profiles: ProfileJoin | ProfileJoin[] | null;
-  }>).map((row) => {
+    comment_reactions: CountJoin | null;
+  }>;
+
+  const likedCommentIds = new Set<string>();
+  if (currentUserId && rows.length > 0) {
+    const { data: ownReactions, error: reactionError } = await supabase
+      .from("comment_reactions")
+      .select("comment_id")
+      .eq("user_id", currentUserId)
+      .eq("kind", "like")
+      .in("comment_id", rows.map((row) => row.id));
+    if (reactionError) throw reactionError;
+    ownReactions?.forEach((reaction) => likedCommentIds.add(reaction.comment_id));
+  }
+
+  return rows.map((row) => {
     const profile = joinOne(row.profiles);
     return {
       id: row.id,
@@ -494,8 +586,41 @@ export async function listBoardComments(boardId: string): Promise<BoardComment[]
       avatarUrl: profile.avatar_url || "",
       createdAt: row.created_at,
       time: relativeTime(row.created_at),
+      likeCount: countJoin(row.comment_reactions),
+      likedByCurrentUser: likedCommentIds.has(row.id),
     };
   });
+}
+
+export async function toggleCommentLike(
+  commentId: string,
+  userId: string,
+): Promise<boolean> {
+  const { data: existing, error: findError } = await supabase
+    .from("comment_reactions")
+    .select("comment_id")
+    .eq("comment_id", commentId)
+    .eq("user_id", userId)
+    .eq("kind", "like")
+    .maybeSingle();
+  if (findError) throw findError;
+
+  if (existing) {
+    const { error } = await supabase
+      .from("comment_reactions")
+      .delete()
+      .eq("comment_id", commentId)
+      .eq("user_id", userId)
+      .eq("kind", "like");
+    if (error) throw error;
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("comment_reactions")
+    .insert({ comment_id: commentId, user_id: userId, kind: "like" });
+  if (error) throw error;
+  return true;
 }
 
 export async function addBoardComment(

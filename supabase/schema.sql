@@ -28,15 +28,20 @@ create table if not exists public.boards (
   case_code text not null check (char_length(case_code) between 1 and 60),
   genre text not null check (
     genre in (
-      '灵异',
-      '超自然',
+      '超自然事件',
       '科幻',
-      '民俗',
-      '失踪',
-      'ARG',
-      '模拟恐怖',
+      '民俗怪谈',
+      '失踪调查',
+      'ARG模拟恐怖',
       '都市传说',
-      '档案异常'
+      '八卦',
+      '广播剧',
+      '心理恐怖',
+      '后室',
+      '新怪谈',
+      '未解事件',
+      '网络谜案',
+      '身份谜案'
     )
   ),
   description text not null default '',
@@ -81,6 +86,14 @@ create table if not exists public.reactions (
   primary key (board_id, user_id, kind)
 );
 
+create table if not exists public.comment_reactions (
+  comment_id uuid not null references public.comments(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  kind text not null default 'like' check (kind = 'like'),
+  created_at timestamptz not null default now(),
+  primary key (comment_id, user_id, kind)
+);
+
 create table if not exists public.board_views (
   board_id uuid not null references public.boards(id) on delete cascade,
   viewer_id uuid not null references public.profiles(id) on delete cascade,
@@ -99,6 +112,10 @@ create index if not exists comments_board_created_idx
 create index if not exists comments_parent_created_idx
   on public.comments (parent_id, created_at)
   where parent_id is not null;
+create index if not exists comment_reactions_comment_idx
+  on public.comment_reactions (comment_id, created_at desc);
+create index if not exists comment_reactions_user_idx
+  on public.comment_reactions (user_id, created_at desc);
 create index if not exists board_views_board_recent_idx
   on public.board_views (board_id, last_viewed_at desc);
 
@@ -317,11 +334,91 @@ as $$
   limit 8;
 $$;
 
+create or replace function public.get_detective_profile_stats(target_user_id uuid)
+returns table (
+  likes_received bigint,
+  replies_received bigint
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    (
+      select count(*)::bigint
+      from public.comments
+      join public.comment_reactions
+        on comment_reactions.comment_id = comments.id
+       and comment_reactions.kind = 'like'
+      where comments.author_id = target_user_id
+    ) as likes_received,
+    (
+      select count(*)::bigint
+      from public.comments as parent_comment
+      join public.comments as reply
+        on reply.parent_id = parent_comment.id
+      where parent_comment.author_id = target_user_id
+        and reply.author_id <> target_user_id
+    ) as replies_received;
+$$;
+
+create or replace function public.get_detective_leaderboard(max_rows integer default 5)
+returns table (
+  user_id uuid,
+  display_name text,
+  handle text,
+  avatar_url text,
+  likes_received bigint,
+  replies_received bigint
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with likes as (
+    select comments.author_id, count(*)::bigint as likes_received
+    from public.comments
+    join public.comment_reactions
+      on comment_reactions.comment_id = comments.id
+     and comment_reactions.kind = 'like'
+    group by comments.author_id
+  ),
+  replies as (
+    select parent_comment.author_id, count(*)::bigint as replies_received
+    from public.comments as parent_comment
+    join public.comments as reply
+      on reply.parent_id = parent_comment.id
+     and reply.author_id <> parent_comment.author_id
+    group by parent_comment.author_id
+  )
+  select
+    profiles.id as user_id,
+    profiles.display_name,
+    profiles.handle,
+    profiles.avatar_url,
+    coalesce(likes.likes_received, 0)::bigint,
+    coalesce(replies.replies_received, 0)::bigint
+  from public.profiles
+  left join likes on likes.author_id = profiles.id
+  left join replies on replies.author_id = profiles.id
+  where exists (
+    select 1 from public.comments where comments.author_id = profiles.id
+  )
+  order by
+    coalesce(likes.likes_received, 0) desc,
+    coalesce(replies.replies_received, 0) desc,
+    profiles.created_at asc
+  limit greatest(1, least(coalesce(max_rows, 5), 50));
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.user_consents enable row level security;
 alter table public.boards enable row level security;
 alter table public.comments enable row level security;
 alter table public.reactions enable row level security;
+alter table public.comment_reactions enable row level security;
 alter table public.board_views enable row level security;
 
 drop policy if exists "profiles are publicly readable" on public.profiles;
@@ -451,6 +548,41 @@ create policy "users delete their own reactions"
   to authenticated
   using ((select auth.uid()) = user_id);
 
+drop policy if exists "public comment reactions are readable" on public.comment_reactions;
+create policy "public comment reactions are readable"
+  on public.comment_reactions for select
+  using (
+    exists (
+      select 1
+      from public.comments
+      join public.boards on boards.id = comments.board_id
+      where comments.id = comment_reactions.comment_id
+        and boards.is_public = true
+    )
+  );
+
+drop policy if exists "users like public comments" on public.comment_reactions;
+create policy "users like public comments"
+  on public.comment_reactions for insert
+  to authenticated
+  with check (
+    (select auth.uid()) = user_id
+    and exists (
+      select 1
+      from public.comments
+      join public.boards on boards.id = comments.board_id
+      where comments.id = comment_reactions.comment_id
+        and comments.author_id <> (select auth.uid())
+        and boards.is_public = true
+    )
+  );
+
+drop policy if exists "users remove their comment likes" on public.comment_reactions;
+create policy "users remove their comment likes"
+  on public.comment_reactions for delete
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
 drop policy if exists "public board viewers are readable" on public.board_views;
 drop policy if exists "users read their own view history" on public.board_views;
 create policy "users read their own view history"
@@ -467,6 +599,8 @@ grant select, insert, update, delete on public.comments to authenticated;
 grant select on public.comments to anon;
 grant select, insert, delete on public.reactions to authenticated;
 grant select on public.reactions to anon;
+grant select on public.comment_reactions to anon, authenticated;
+grant insert, delete on public.comment_reactions to authenticated;
 revoke select on public.board_views from anon;
 grant select on public.board_views to authenticated;
 grant select, update on public.user_consents to authenticated;
@@ -475,6 +609,10 @@ revoke all on function public.record_board_view(uuid) from public;
 grant execute on function public.record_board_view(uuid) to anon, authenticated;
 revoke all on function public.get_board_viewers(uuid) from public;
 grant execute on function public.get_board_viewers(uuid) to anon, authenticated;
+revoke all on function public.get_detective_profile_stats(uuid) from public;
+grant execute on function public.get_detective_profile_stats(uuid) to anon, authenticated;
+revoke all on function public.get_detective_leaderboard(integer) from public;
+grant execute on function public.get_detective_leaderboard(integer) to anon, authenticated;
 
 insert into storage.buckets (
   id,

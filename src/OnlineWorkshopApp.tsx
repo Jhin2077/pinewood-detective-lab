@@ -14,6 +14,7 @@ import {
   SunIcon,
   TrashIcon,
   TrendUpIcon,
+  TrophyIcon,
   UploadSimpleIcon,
   UserIcon,
   UserPlusIcon,
@@ -39,15 +40,18 @@ import {
   type BoardViewer,
   type CommunityBoard,
   type CommunityProfile,
+  type DetectiveLeaderboardEntry,
   deleteOwnBoard,
   deleteOwnBoardByClientId,
   getProfile,
   getPublicBoard,
   listBoardComments,
+  listDetectiveLeaderboard,
   listRecentBoardIds,
   listPublicBoards,
   publishBoard,
   toggleBoardLike,
+  toggleCommentLike,
   uploadProfileAvatar,
 } from "./communityApi";
 import { CASE_GENRES as PUBLISHABLE_CASE_GENRES } from "./caseGenres";
@@ -131,6 +135,55 @@ function ProfileAvatar({
         ? <img src={url} alt={name} />
         : <UserIcon size={Math.max(14, Math.round(size * 0.52))} />}
     </span>
+  );
+}
+
+function CommentLikeButton({
+  comment,
+  session,
+  onOpenAuth,
+  onChanged,
+  onError,
+}: {
+  comment: BoardComment;
+  session: Session | null;
+  onOpenAuth: () => void;
+  onChanged: (liked: boolean) => void;
+  onError: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const isOwnComment = Boolean(session?.user.id && session.user.id === comment.authorId);
+
+  const toggleLike = async () => {
+    if (!session?.user.id) {
+      onOpenAuth();
+      return;
+    }
+    if (isOwnComment || pending) return;
+
+    setPending(true);
+    try {
+      onChanged(await toggleCommentLike(comment.id, session.user.id));
+    } catch {
+      onError();
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={`comment-like-button ${comment.likedByCurrentUser ? "is-active" : ""}`}
+      onClick={() => void toggleLike()}
+      disabled={pending || isOwnComment}
+      aria-label={isOwnComment ? "不能给自己的留言点赞" : `点赞 ${comment.author} 的留言`}
+      aria-pressed={comment.likedByCurrentUser}
+      title={isOwnComment ? "不能给自己的留言点赞" : "这条留言有帮助"}
+    >
+      <HeartIcon size={13} weight={comment.likedByCurrentUser ? "fill" : "regular"} />
+      <span>{comment.likeCount}</span>
+    </button>
   );
 }
 
@@ -386,12 +439,14 @@ function CommentsDialog({
   onClose,
   onOpenAuth,
   onCommentAdded,
+  onReputationChange,
 }: {
   board: CommunityBoard;
   session: Session | null;
   onClose: () => void;
   onOpenAuth: (mode: AuthMode) => void;
   onCommentAdded: () => void;
+  onReputationChange: () => void;
 }) {
   const [comments, setComments] = useState<BoardComment[]>([]);
   const [body, setBody] = useState("");
@@ -402,18 +457,19 @@ function CommentsDialog({
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [error, setError] = useState("");
   const canReplyAsOwner = Boolean(session?.user.id && session.user.id === board.ownerId);
+  const currentUserId = session?.user.id ?? "";
 
   const loadComments = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      setComments(await listBoardComments(board.id));
+      setComments(await listBoardComments(board.id, currentUserId));
     } catch {
       setError("评论暂时无法读取。");
     } finally {
       setLoading(false);
     }
-  }, [board.id]);
+  }, [board.id, currentUserId]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void loadComments(), 0);
@@ -485,15 +541,38 @@ function CommentsDialog({
                 <div>
                   <header><strong>{comment.author}</strong><i>{comment.handle} · {comment.time}</i></header>
                   <p>{comment.body}</p>
-                  {canReplyAsOwner && (
-                    <button
-                      type="button"
-                      className="community-comment-reply-trigger"
-                      onClick={() => startReply(comment)}
-                    >
-                      <ChatCircleIcon size={13} />回复这条留言
-                    </button>
-                  )}
+                  <div className="community-comment-actions">
+                    <CommentLikeButton
+                      comment={comment}
+                      session={session}
+                      onOpenAuth={() => {
+                        onClose();
+                        onOpenAuth("signin");
+                      }}
+                      onChanged={(liked) => {
+                        setComments((current) => current.map((item) => (
+                          item.id === comment.id
+                            ? {
+                                ...item,
+                                likedByCurrentUser: liked,
+                                likeCount: Math.max(0, item.likeCount + (liked ? 1 : -1)),
+                              }
+                            : item
+                        )));
+                        onReputationChange();
+                      }}
+                      onError={() => setError("留言点赞没有完成，请稍后再试。")}
+                    />
+                    {canReplyAsOwner && (
+                      <button
+                        type="button"
+                        className="community-comment-reply-trigger"
+                        onClick={() => startReply(comment)}
+                      >
+                        <ChatCircleIcon size={13} />回复这条留言
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               {comments.some((reply) => reply.parentId === comment.id) && (
@@ -507,6 +586,27 @@ function CommentsDialog({
                           <i>{reply.time}</i>
                         </header>
                         <p>{reply.body}</p>
+                        <CommentLikeButton
+                          comment={reply}
+                          session={session}
+                          onOpenAuth={() => {
+                            onClose();
+                            onOpenAuth("signin");
+                          }}
+                          onChanged={(liked) => {
+                            setComments((current) => current.map((item) => (
+                              item.id === reply.id
+                                ? {
+                                    ...item,
+                                    likedByCurrentUser: liked,
+                                    likeCount: Math.max(0, item.likeCount + (liked ? 1 : -1)),
+                                  }
+                                : item
+                            )));
+                            onReputationChange();
+                          }}
+                          onError={() => setError("留言点赞没有完成，请稍后再试。")}
+                        />
                       </div>
                     </div>
                   ))}
@@ -598,12 +698,13 @@ function BoardCommentsPanel({
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [error, setError] = useState("");
   const canReplyAsOwner = Boolean(session?.user.id && session.user.id === boardOwnerId);
+  const currentUserId = session?.user.id ?? "";
 
   const loadComments = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const nextComments = await listBoardComments(boardId);
+      const nextComments = await listBoardComments(boardId, currentUserId);
       setComments(nextComments);
       onCountChange(nextComments.length);
     } catch {
@@ -611,7 +712,7 @@ function BoardCommentsPanel({
     } finally {
       setLoading(false);
     }
-  }, [boardId, onCountChange]);
+  }, [boardId, currentUserId, onCountChange]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void loadComments(), 0);
@@ -684,15 +785,34 @@ function BoardCommentsPanel({
                 <strong>{comment.author}<small>{comment.time}</small></strong>
                 <span>{comment.handle}</span>
                 <p>{comment.body}</p>
-                {canReplyAsOwner && (
-                  <button
-                    type="button"
-                    className="online-case-comment-reply-trigger"
-                    onClick={() => startReply(comment)}
-                  >
-                    <ChatCircleIcon size={12} />回复
-                  </button>
-                )}
+                <div className="online-case-comment-actions">
+                  <CommentLikeButton
+                    comment={comment}
+                    session={session}
+                    onOpenAuth={() => onOpenAuth("signin")}
+                    onChanged={(liked) => {
+                      setComments((current) => current.map((item) => (
+                        item.id === comment.id
+                          ? {
+                              ...item,
+                              likedByCurrentUser: liked,
+                              likeCount: Math.max(0, item.likeCount + (liked ? 1 : -1)),
+                            }
+                          : item
+                      )));
+                    }}
+                    onError={() => setError("留言点赞没有完成，请稍后再试。")}
+                  />
+                  {canReplyAsOwner && (
+                    <button
+                      type="button"
+                      className="online-case-comment-reply-trigger"
+                      onClick={() => startReply(comment)}
+                    >
+                      <ChatCircleIcon size={12} />回复
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             {comments.some((reply) => reply.parentId === comment.id) && (
@@ -707,6 +827,23 @@ function BoardCommentsPanel({
                         <small>{reply.time}</small>
                       </strong>
                       <p>{reply.body}</p>
+                      <CommentLikeButton
+                        comment={reply}
+                        session={session}
+                        onOpenAuth={() => onOpenAuth("signin")}
+                        onChanged={(liked) => {
+                          setComments((current) => current.map((item) => (
+                            item.id === reply.id
+                              ? {
+                                  ...item,
+                                  likedByCurrentUser: liked,
+                                  likeCount: Math.max(0, item.likeCount + (liked ? 1 : -1)),
+                                }
+                              : item
+                          )));
+                        }}
+                        onError={() => setError("留言点赞没有完成，请稍后再试。")}
+                      />
                     </div>
                   </div>
                 ))}
@@ -789,7 +926,9 @@ function CommunityHome({
   const [activeGenre, setActiveGenre] = useState("");
   const [genreWheelVersion, setGenreWheelVersion] = useState(0);
   const [boards, setBoards] = useState<CommunityBoard[]>([]);
+  const [detectives, setDetectives] = useState<DetectiveLeaderboardEntry[]>([]);
   const [loadingBoards, setLoadingBoards] = useState(true);
+  const [loadingDetectives, setLoadingDetectives] = useState(true);
   const [boardError, setBoardError] = useState("");
   const [likedBoardIds, setLikedBoardIds] = useState<Set<string>>(() => new Set());
   const [commentBoard, setCommentBoard] = useState<CommunityBoard | null>(null);
@@ -817,6 +956,17 @@ function CommunityHome({
     }
   }, []);
 
+  const loadDetectives = useCallback(async () => {
+    setLoadingDetectives(true);
+    try {
+      setDetectives(await listDetectiveLeaderboard(5));
+    } catch {
+      setDetectives([]);
+    } finally {
+      setLoadingDetectives(false);
+    }
+  }, []);
+
   useEffect(() => {
     window.localStorage.setItem(COMMUNITY_THEME_KEY, theme);
   }, [theme]);
@@ -825,6 +975,11 @@ function CommunityHome({
     const timeout = window.setTimeout(() => void loadBoards(), 0);
     return () => window.clearTimeout(timeout);
   }, [loadBoards]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void loadDetectives(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadDetectives]);
 
   useEffect(() => {
     if (!session?.user.id) {
@@ -924,6 +1079,9 @@ function CommunityHome({
     try {
       const avatarUrl = await uploadProfileAvatar(session.user.id, file);
       onProfileChange({
+        likesReceived: profile?.likesReceived ?? 0,
+        repliesReceived: profile?.repliesReceived ?? 0,
+        rankTitle: profile?.rankTitle ?? "菜鸟侦探",
         displayName: profile?.displayName || "社区侦探",
         handle: profile?.handle || "",
         avatarUrl,
@@ -1045,6 +1203,37 @@ function CommunityHome({
               <small>滚动鼠标滚轮切换</small>
             </footer>
           </section>
+
+          <section className="community-side-panel community-ranking">
+            <header>
+              <h2><TrophyIcon size={19} weight="duotone" />侦探排行榜</h2>
+              <span>评论赞</span>
+            </header>
+            <div>
+              {loadingDetectives ? (
+                <p className="community-ranking-empty">正在整理侦探档案…</p>
+              ) : detectives.length === 0 ? (
+                <p className="community-ranking-empty">还没有获得点赞的调查留言。</p>
+              ) : detectives.map((detective, index) => (
+                <article key={detective.userId}>
+                  <b>{String(index + 1).padStart(2, "0")}</b>
+                  <ProfileAvatar
+                    url={detective.avatarUrl}
+                    name={detective.displayName}
+                    size={30}
+                  />
+                  <span>
+                    <strong>{detective.displayName}</strong>
+                    <small>{detective.rankTitle}</small>
+                    <i>
+                      <HeartIcon size={12} weight="fill" />{detective.likesReceived}
+                      <ChatCircleIcon size={12} />{detective.repliesReceived}
+                    </i>
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
         </aside>
 
         <main className="community-feed">
@@ -1089,6 +1278,37 @@ function CommunityHome({
               ))}
             </select>
           </label>
+
+          <section className="community-side-panel community-ranking community-mobile-ranking">
+            <header>
+              <h2><TrophyIcon size={19} weight="duotone" />侦探排行榜</h2>
+              <span>评论赞</span>
+            </header>
+            <div>
+              {loadingDetectives ? (
+                <p className="community-ranking-empty">正在整理侦探档案…</p>
+              ) : detectives.length === 0 ? (
+                <p className="community-ranking-empty">还没有获得点赞的调查留言。</p>
+              ) : detectives.map((detective, index) => (
+                <article key={detective.userId}>
+                  <b>{String(index + 1).padStart(2, "0")}</b>
+                  <ProfileAvatar
+                    url={detective.avatarUrl}
+                    name={detective.displayName}
+                    size={30}
+                  />
+                  <span>
+                    <strong>{detective.displayName}</strong>
+                    <small>{detective.rankTitle}</small>
+                    <i>
+                      <HeartIcon size={12} weight="fill" />{detective.likesReceived}
+                      <ChatCircleIcon size={12} />{detective.repliesReceived}
+                    </i>
+                  </span>
+                </article>
+              ))}
+            </div>
+          </section>
 
           <div className="community-board-list">
             {visibleBoards.map((board) => (
@@ -1198,6 +1418,22 @@ function CommunityHome({
             </span>
             <strong>{session ? `欢迎回来，${profile?.displayName || "侦探"}` : "建立你的侦探档案"}</strong>
             <p>{session ? "继续创作、保存并公开你的案件板。" : "登录后创建自己的案件板，并发布到公共社区。"}</p>
+            {session && (
+              <div className="community-account-reputation">
+                <span className="is-rank">
+                  <small>当前称号</small>
+                  <strong>{profile?.rankTitle || "菜鸟侦探"}</strong>
+                </span>
+                <span>
+                  <small>被点赞</small>
+                  <strong>{profile?.likesReceived ?? 0}</strong>
+                </span>
+                <span>
+                  <small>被回复</small>
+                  <strong>{profile?.repliesReceived ?? 0}</strong>
+                </span>
+              </div>
+            )}
             {session ? (
               <>
                 <button
@@ -1273,6 +1509,7 @@ function CommunityHome({
                 : board
             )));
           }}
+          onReputationChange={() => void loadDetectives()}
         />
       )}
       {session && mobileAccountOpen && (
@@ -1301,6 +1538,20 @@ function CommunityHome({
               </span>
               <strong>欢迎回来，{profile?.displayName || "侦探"}</strong>
               <p>继续创作、保存并公开你的案件板。</p>
+              <div className="community-account-reputation">
+                <span className="is-rank">
+                  <small>当前称号</small>
+                  <strong>{profile?.rankTitle || "菜鸟侦探"}</strong>
+                </span>
+                <span>
+                  <small>被点赞</small>
+                  <strong>{profile?.likesReceived ?? 0}</strong>
+                </span>
+                <span>
+                  <small>被回复</small>
+                  <strong>{profile?.repliesReceived ?? 0}</strong>
+                </span>
+              </div>
               <button
                 className="community-avatar-upload"
                 onClick={() => mobileAvatarInputRef.current?.click()}
@@ -1557,6 +1808,21 @@ export function OnlineWorkshopApp() {
               >
                 <ChatCircleIcon size={14} />
                 <span>协助留言</span>
+                <b>{publicCommentCount}</b>
+              </button>
+            ) : undefined}
+            stageFooterAddon={activeBoardId ? (
+              <button
+                className="online-board-comment-entry"
+                onClick={() => setCommentsPanelOpen(true)}
+                aria-expanded={commentsPanelOpen}
+                aria-label="打开协助探案留言"
+              >
+                <ChatCircleIcon size={18} />
+                <span>
+                  <small>协助探案</small>
+                  <strong>写下线索、推测或需要补充的内容…</strong>
+                </span>
                 <b>{publicCommentCount}</b>
               </button>
             ) : undefined}

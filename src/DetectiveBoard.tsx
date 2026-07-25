@@ -224,6 +224,7 @@ export function DetectiveBoard({
   headerAddon,
   headerStatusAddon,
   inspectorHeaderAddon,
+  stageFooterAddon,
 }: {
   publicPreview?: PublicBoardPreview;
   canPublish?: boolean;
@@ -233,6 +234,7 @@ export function DetectiveBoard({
   headerAddon?: ReactNode;
   headerStatusAddon?: ReactNode;
   inspectorHeaderAddon?: ReactNode;
+  stageFooterAddon?: ReactNode;
 } = {}) {
   const [boards, setBoards] = useState<BoardDocument[]>([INITIAL_BOARD]);
   const [activeBoardId, setActiveBoardId] = useState(INITIAL_BOARD.id);
@@ -1582,6 +1584,16 @@ export function DetectiveBoard({
             </div>
           )}
         </div>
+
+        {stageFooterAddon && (
+          <div
+            className="board-stage-footer-addon"
+            onPointerDown={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
+          >
+            {stageFooterAddon}
+          </div>
+        )}
 
         {viewMode !== "board" && (
           <div className={`mobile-view-heading ${portraitHintOpen ? "is-below-orientation-hint" : ""}`} aria-live="polite">
