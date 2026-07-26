@@ -62,17 +62,6 @@ CATEGORIES = (
         friendly_prefix="装饰文字",
     ),
     CategorySpec(
-        category_id="layout",
-        label="拼贴版式",
-        description="已经组合完成的拼贴画面与构图参考",
-        source_folder="4-10个预置拼贴效果",
-        output_folder="collage-layouts",
-        prefix="layout",
-        max_side=1080,
-        quality=68,
-        friendly_prefix="拼贴版式",
-    ),
-    CategorySpec(
         category_id="object",
         label="物件剪贴",
         description="从复古物件总览图中逐件拆分的透明素材",
